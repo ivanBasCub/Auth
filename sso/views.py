@@ -10,6 +10,7 @@ from .models import EveCharater
 from base64 import b64encode
 import requests
 from datetime import datetime, timedelta
+import esi.views as esi_views
 
 def eve_login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -71,7 +72,12 @@ def register_eve_character(request, tokens, user_info):
         character.accessToken = tokens["access_token"]
         character.refreshToken = tokens["refresh_token"]
         character.expiration = expiration
+        character = esi_views.character_corp_alliance_info(character)
+        character = esi_views.character_wallet_money(character)
+        character = esi_views.character_skill_points(character)
+        
         character.save()
+
         return redirect("../../auth/dashboard/")
     else:
         character = EveCharater.objects.create(
@@ -84,6 +90,10 @@ def register_eve_character(request, tokens, user_info):
             user_character = request.user
         )
 
+        character = esi_views.character_corp_alliance_info(character)
+        character = esi_views.character_wallet_money(character)
+        character = esi_views.character_skill_points(character)
+        
         character.save()
         return redirect("../../auth/dashboard/")
 
@@ -100,6 +110,10 @@ def update_create_user(request, tokens, user_info):
         character.accessToken = tokens["access_token"]
         character.refreshToken = tokens["refresh_token"]
         character.expiration = expiration
+        character = esi_views.character_corp_alliance_info(character)
+        character = esi_views.character_wallet_money(character)
+        character = esi_views.character_skill_points(character)
+        
         character.save()
 
         login(request,user)
@@ -122,6 +136,10 @@ def update_create_user(request, tokens, user_info):
             main = True,
             user_character = user
         )
+        character = esi_views.character_corp_alliance_info(character)
+        character = esi_views.character_wallet_money(character)
+        character = esi_views.character_skill_points(character)
+        
         character.save()
 
         login(request, user)
