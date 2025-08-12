@@ -17,16 +17,16 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="#">Character Audit</a>
+                        <a class="nav-link" aria-current="page" href="/auth/audit/">Character Audit</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
                             Flotas
                         </a>
-                        <ul class="dropdown-menu bg-dark">
-                            <li><a class="dropdown-item link-light" href="#">Doctrinas</a></li>
-                            <li><a class="dropdown-item link-light" href="#">Segimiento de Flotas</a></li>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Doctrinas</a></li>
+                            <li><a class="dropdown-item" href="#">Segimiento de Flotas</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -68,7 +68,7 @@
                                     <h4 class="ms-auto me-auto mb-3">Personajes</h4>
                                 </div>
                                 <div>
-                                    <div>
+                                    <div class="height: 300px; overflow-y:auto;">
                                         <div class="d-flex">
                                             <a href="/sso/login/" class="btn btn-danger flex-fill m-1"
                                                 title="Agregar Personaje">
@@ -94,8 +94,8 @@
                                                         <img class="rounded-circle" src="https://images.evetech.net/characters/{{alt.characterId}}/portrait?size=32">
                                                     </td>
                                                     <td class="text-center">{{alt.characterName}}</td>
-                                                    <td class="text-center">{{alt.corp_name}}</td>
-                                                    <td class="text-center">{{alt.alliance_name}}</td>
+                                                    <td class="text-center">{{alt.corpName}}</td>
+                                                    <td class="text-center">{{alt.allianceName}}</td>
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -106,7 +106,27 @@
                         </div>
                     </div>
                     <div class="col-12 col-xl-4 mb-3" id="panel-roles">
-                        <div class=""></div>
+                        <div class="card h-100 bg-dark text-light">
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h4 class="ms-auto me-auto mb-3"> Membership</h4>
+                                </div>
+                                <div>
+                                    <div class="height: 300px; overflow-y:auto;">
+                                        <h5 class="text-center">State: Member</h5>
+                                        <table class="table text-light">
+                                            <tbody>
+                                                {% for group in groups %}
+                                                <tr>
+                                                    <td class="text-center"> {{group}}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

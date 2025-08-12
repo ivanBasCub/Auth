@@ -25,5 +25,6 @@ urlpatterns = [
     path('sso/callback/', sso_views.eve_callback, name='eve_callback'),
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
     path('', web_views.index, name="main"),
-    path('auth/dashboard/', web_views.dashboard, name="dashboard")
+    path('auth/dashboard/', web_views.dashboard, name="dashboard"),
+    path('auth/audit/', web_views.audit_account, name="audit")
 ]

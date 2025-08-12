@@ -12,9 +12,26 @@ def dashboard(request):
     list_alts = EveCharater.objects.filter(main=False, user_character = request.user).all()
 
     for alt in list_alts:
-        alt = esi_views.character_extra_info(alt)
+        alt = esi_views.character_corp_alliance_info(alt)
 
     return render(request, "dashboard.html",{
         "main_pj" : main_pj,
-        "list_alts" : list_alts
+        "list_alts" : list_alts,
+        "groups" : request.user.groups.all()
+    })
+
+@login_required(login_url='/')
+def audit_account(request):
+    list_pjs = EveCharater.objects.filter(user_character = request.user).all()
+
+    for pj in list_pjs:
+        pj = esi_views.character_corp_alliance_info(pj)
+        pj = esi_views.character_wallet_money(pj)
+
+    main_pj = list_pjs.filter(main=True).first()
+    list_alts = list_pjs.filter(main=False).all()
+
+    return render(request, "audit.html",{
+        "main_pj" : main_pj,
+        "list_pjs" : list_pjs
     })
