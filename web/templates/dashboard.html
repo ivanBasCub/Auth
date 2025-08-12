@@ -1,13 +1,117 @@
 {% extends 'base.html' %}
 
-{% block content %}ç
+{% block style %}
+<title>Helgast Auth - Pagina Principal</title>
+{% endblock %}
+
+{% block content %}
 <header>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary bg-danger navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Helgast Auth</a>
+            <button class="navbar-toggler btn-light" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="#">Character Audit</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Flotas
+                        </a>
+                        <ul class="dropdown-menu bg-dark">
+                            <li><a class="dropdown-item link-light" href="#">Doctrinas</a></li>
+                            <li><a class="dropdown-item link-light" href="#">Segimiento de Flotas</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li></li>
 
+                        </ul>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <div class="align-self-center text-start">
+                        <h6 class="m-0 text-light">{{main_pj.characterName}}</h5>
+                    </div>
+                    <div class="p-2 position-relative m-2">
+                        <img class="rounded-circle"
+                            src="https://images.evetech.net/characters/{{main_pj.characterId}}/portrait?size=32"
+                            alt="Senocab">
+                    </div>
+                    <a class="btn btn-dark align-self-center text-danger" href="/sso/logout/">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
 </header>
-<main>
-    
-</main>
-<footer>
+<main class="row flex-nowrap m-0 bg-dark">
+    <div class="row flex-nowarp vh-100 overflow-auto">
+        <div class="nav-padding col flex-nowrap vh-100 overflow-auto">
+            <div class="my-3">
+                <div class="row">
+                    <div class="col-12 col-xl-8 mb-3" id="panel-character">
+                        <div class="card h-100 bg-dark text-light">
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h4 class="ms-auto me-auto mb-3">Personajes</h4>
+                                </div>
+                                <div>
+                                    <div>
+                                        <div class="d-flex">
+                                            <a href="/sso/login/" class="btn btn-danger flex-fill m-1"
+                                                title="Agregar Personaje">
+                                                <span class="d-md-inline m-2">Agregar Personaje</span>
+                                            </a>
+                                            <a href="/account/characters/main/" class="btn btn-danger disabled flex-fill m-1" title="Cambiar Personaje Principal">
+                                                <span class="d-md-inline m-2">Cambiar Personaje Principal</span>
+                                            </a>
+                                        </div>
+                                        <table class="table text-light">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center"></th>
+                                                    <th class="text-center">Nombre</th>
+                                                    <th class="text-center">Corporacion</th>
+                                                    <th class="text-center">Alianza</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for alt in list_alts %}
+                                                <tr>
+                                                    <td class="text-center">
+                                                        <img class="rounded-circle" src="https://images.evetech.net/characters/{{alt.characterId}}/portrait?size=32">
+                                                    </td>
+                                                    <td class="text-center">{{alt.characterName}}</td>
+                                                    <td class="text-center">{{alt.corp_name}}</td>
+                                                    <td class="text-center">{{alt.alliance_name}}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-4 mb-3" id="panel-roles">
+                        <div class=""></div>
+                    </div>
+                </div>
 
-</footer>
+            </div>
+        </div>
+    </div>
+</main>
 {% endblock %}

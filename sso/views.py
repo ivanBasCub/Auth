@@ -72,7 +72,7 @@ def register_eve_character(request, tokens, user_info):
         character.refreshToken = tokens["refresh_token"]
         character.expiration = expiration
         character.save()
-        return redirect("../")
+        return redirect("../../auth/dashboard/")
     else:
         character = EveCharater.objects.create(
             characterId = user_info["CharacterID"],
@@ -85,7 +85,7 @@ def register_eve_character(request, tokens, user_info):
         )
 
         character.save()
-        return redirect("../")
+        return redirect("../../auth/dashboard/")
 
 # Caso de que no haya una cuenta logeada
 def update_create_user(request, tokens, user_info):
@@ -108,7 +108,7 @@ def update_create_user(request, tokens, user_info):
         check = EveCharater.objects.filter(characterName = user_info["CharacterName"])
 
         if check.exists():
-            return redirect("../")
+            return redirect("../../")
         
         user = User.objects.create(username = user_info["CharacterName"])
         user.save()
@@ -127,7 +127,7 @@ def update_create_user(request, tokens, user_info):
         login(request, user)
 
 
-    return redirect("../dashboard/")
+    return redirect("../../auth/dashboard/")
 
 # Funcion para refrescar el token de los pj de Eve
 def refresh_token(character):
@@ -162,4 +162,9 @@ def refresh_token(character):
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")
 
-    return redirect("../dashboard")
+    return redirect("auth/dashboard/")
+
+
+def eve_logout(request):
+    logout(request)
+    return redirect("/")
