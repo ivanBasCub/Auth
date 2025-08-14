@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -147,3 +148,10 @@ EVE_ESI_API_URL = "https://esi.evetech.net"
 # Varibles para celery
 CELERY_BROKER_URL = "amqp://helgast:helgast@localhost:5672/localhost"
 CELERY_RESULT_BACKEND = 'rpc://' 
+
+CELERY_BEAT_SCHEDULE = {
+    'token_refesh_15': {
+        'task' : 'sso.tasks.tokens',
+        'schedule' : crontab(minute="*")
+    }
+}

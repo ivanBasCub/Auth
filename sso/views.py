@@ -8,7 +8,8 @@ from django.contrib.auth.models import User
 from .models import EveCharater
 from base64 import b64encode
 import requests
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 import esi.views as esi_views
 
 # Funcion para llamar hacer el login con la web de Eve
@@ -51,7 +52,7 @@ def eve_callback(request):
 
     res = requests.get(url, headers=header)
     user_info = res.json()
-
+    
     return check_account(request, tokens, user_info)
 
 # Funciones para comprobar las cuentas
@@ -64,9 +65,7 @@ def check_account(request, tokens, user_info):
 # Caso de que haya una cuenta logeada
 def register_eve_character(request, tokens, user_info):
     check = EveCharater.objects.filter(characterName = user_info["CharacterName"])
-    actual_hour = datetime.now().time()
-    complete_hour = datetime.combine(datetime.today(), actual_hour)
-    expiration = (complete_hour + timedelta(minutes=20)).time()
+    expiration = timezone.now() + timedelta(minutes=20)
 
     if check.exists():
         refresh_eve_character(user_info, tokens, expiration)
@@ -79,9 +78,7 @@ def register_eve_character(request, tokens, user_info):
 
 # Caso de que no haya una cuenta logeada
 def update_create_user(request, tokens, user_info):
-    actual_hour = datetime.now().time()
-    complete_hour = datetime.combine(datetime.today(), actual_hour)
-    expiration = (complete_hour + timedelta(minutes=20)).time()
+    expiration = timezone.now() + timedelta(minutes=20)
 
     try:
         # Caso de que el usuario y el pj existan en la BBDD
@@ -123,7 +120,7 @@ def save_eve_character(user, user_info, tokens, expiration):
     character = esi_views.character_corp_alliance_info(character)
     character = esi_views.character_wallet_money(character)
     character = esi_views.character_skill_points(character)
-        
+
     character.save()
 
 # Funcion para actualizar la información del personaje
@@ -159,9 +156,7 @@ def refresh_token(character):
 
     if response.status_code == 200:
         tokens = response.json()
-        actual_hour = datetime.now().time()
-        complete_hour = datetime.combine(datetime.today(), actual_hour)
-        expiration = (complete_hour + timedelta(minutes=20)).time()
+        expiration = timezone.now() + timedelta(minutes=20)
 
         character.accessToken = tokens['access_token']
         character.refreshToken = tokens["refresh_token"]
@@ -173,8 +168,6 @@ def refresh_token(character):
 
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")
-
-    return redirect("auth/dashboard/")
 
 
 def eve_logout(request):
