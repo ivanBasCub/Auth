@@ -1,9 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.conf import settings
 import random
 import string
 import urllib.parse
-from django.http import JsonResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from .models import EveCharater
@@ -12,6 +11,7 @@ import requests
 from datetime import datetime, timedelta
 import esi.views as esi_views
 
+# Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     
@@ -26,6 +26,7 @@ def eve_login(request):
     url = 'https://login.eveonline.com/v2/oauth/authorize?' + urllib.parse.urlencode(params)
     return redirect(url)
 
+# Funcion de autenticación del login con eve y creacion de los tokens y obtener la información principal del personaje
 def eve_callback(request):
     code = request.GET.get('code')
 
@@ -68,33 +69,12 @@ def register_eve_character(request, tokens, user_info):
     expiration = (complete_hour + timedelta(minutes=20)).time()
 
     if check.exists():
-        character = EveCharater.objects.get(characterName = user_info["CharacterName"])
-        character.accessToken = tokens["access_token"]
-        character.refreshToken = tokens["refresh_token"]
-        character.expiration = expiration
-        character = esi_views.character_corp_alliance_info(character)
-        character = esi_views.character_wallet_money(character)
-        character = esi_views.character_skill_points(character)
-        
-        character.save()
+        refresh_eve_character(user_info, tokens, expiration)
 
         return redirect("../../auth/dashboard/")
     else:
-        character = EveCharater.objects.create(
-            characterId = user_info["CharacterID"],
-            characterName = user_info["CharacterName"],
-            accessToken = tokens["access_token"],
-            refreshToken = tokens["refresh_token"],
-            expiration = expiration,
-            main = False,
-            user_character = request.user
-        )
+        save_eve_character(request.user, user_info, tokens, expiration)
 
-        character = esi_views.character_corp_alliance_info(character)
-        character = esi_views.character_wallet_money(character)
-        character = esi_views.character_skill_points(character)
-        
-        character.save()
         return redirect("../../auth/dashboard/")
 
 # Caso de que no haya una cuenta logeada
@@ -106,15 +86,7 @@ def update_create_user(request, tokens, user_info):
     try:
         # Caso de que el usuario y el pj existan en la BBDD
         user = User.objects.get(username = user_info["CharacterName"])
-        character = EveCharater.objects.get(characterName = user_info["CharacterName"])
-        character.accessToken = tokens["access_token"]
-        character.refreshToken = tokens["refresh_token"]
-        character.expiration = expiration
-        character = esi_views.character_corp_alliance_info(character)
-        character = esi_views.character_wallet_money(character)
-        character = esi_views.character_skill_points(character)
-        
-        character.save()
+        refresh_eve_character(user_info, tokens, expiration)
 
         login(request,user)
 
@@ -127,25 +99,44 @@ def update_create_user(request, tokens, user_info):
         user = User.objects.create(username = user_info["CharacterName"])
         user.save()
 
-        character = EveCharater.objects.create(
+        save_eve_character(user, user_info, tokens, expiration)
+
+        login(request, user)
+
+    return redirect("../../auth/dashboard/")
+
+# Funcion para guardar el personaje
+def save_eve_character(user, user_info, tokens, expiration):
+
+    character = EveCharater.objects.create(
             characterId = user_info["CharacterID"],
             characterName = user_info["CharacterName"],
             accessToken = tokens["access_token"],
             refreshToken = tokens["refresh_token"],
             expiration = expiration,
-            main = True,
+            main = False,
             user_character = user
         )
-        character = esi_views.character_corp_alliance_info(character)
-        character = esi_views.character_wallet_money(character)
-        character = esi_views.character_skill_points(character)
+    if user.username == user_info["CharacterName"]:
+        character.main = True
+
+    character = esi_views.character_corp_alliance_info(character)
+    character = esi_views.character_wallet_money(character)
+    character = esi_views.character_skill_points(character)
         
-        character.save()
+    character.save()
 
-        login(request, user)
-
-
-    return redirect("../../auth/dashboard/")
+# Funcion para actualizar la información del personaje
+def refresh_eve_character(user_info, tokens, expiration):
+    character = EveCharater.objects.get(characterName = user_info["CharacterName"])
+    character.accessToken = tokens["access_token"]
+    character.refreshToken = tokens["refresh_token"]
+    character.expiration = expiration
+    character = esi_views.character_corp_alliance_info(character)
+    character = esi_views.character_wallet_money(character)
+    character = esi_views.character_skill_points(character)
+        
+    character.save()
 
 # Funcion para refrescar el token de los pj de Eve
 def refresh_token(character):
@@ -173,8 +164,11 @@ def refresh_token(character):
         expiration = (complete_hour + timedelta(minutes=20)).time()
 
         character.accessToken = tokens['access_token']
-        character.refreshToken = tokens.get('refresh_token', character.refreshToken)  # Puede que no venga
+        character.refreshToken = tokens["refresh_token"]
         character.expiration = expiration
+        character = esi_views.character_corp_alliance_info(character)
+        character = esi_views.character_wallet_money(character)
+        character = esi_views.character_skill_points(character)
         character.save()
 
     else:
