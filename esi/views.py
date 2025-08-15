@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from sso.models import EveCharater
+from doctrines.models import FitShip
 import requests
 
 # Funcion para conseguir informaciónde la corp y la alianza
@@ -86,3 +87,41 @@ def character_skill_points(character):
     character.totalSkillPoints = data["total_sp"]
 
     return character
+
+
+def fit_list():
+    character = EveCharater.objects.filter(characterId = settings.EVE_BOT_CHAR_ID).first()
+
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2020-01-01",
+        "X-Tenant": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {character.accessToken}"
+    }
+
+    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/fittings', headers= headers)
+    data = response.json()
+
+    for data_fit in data:
+        fit = FitShip.objects.filter(fitId = data_fit["fitting_id"])
+
+        if fit.exists():
+            fit = fit.first()
+            fit.items = data_fit["items"]
+
+            fit.save()
+            return 1
+        
+        fit = FitShip.objects.create(
+            fitId = data_fit["fitting_id"],
+            shipId = data_fit["ship_type_id"],
+            nameFit = data_fit["name"],
+            desc = data_fit["description"],
+            items = data_fit["items"]
+        )
+
+        fit.save()
+
+        return 0

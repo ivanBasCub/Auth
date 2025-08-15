@@ -8,7 +8,7 @@ from datetime import timedelta
 def tokens():
     now = timezone.now()
 
-    list_characters = EveCharater.objects.filter(expiration = now + timedelta(minutes=1)).all()
+    list_characters = EveCharater.objects.filter(expiration = now + timedelta(minutes=2)).all()
 
     for character in list_characters:
         refresh_token(character)

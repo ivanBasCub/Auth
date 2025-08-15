@@ -26,5 +26,6 @@ urlpatterns = [
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
     path('', web_views.index, name="main"),
     path('auth/dashboard/', web_views.dashboard, name="dashboard"),
-    path('auth/audit/', web_views.audit_account, name="audit")
+    path('auth/audit/', web_views.audit_account, name="audit"),
+    path('auth/fittings/', web_views.fittings, name="list_fits")
 ]
