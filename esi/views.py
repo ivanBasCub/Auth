@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from sso.models import EveCharater
-from doctrines.models import FitShip
+from doctrines.models import FitShip, Categories, Doctrine
 import requests
 
 # Funcion para conseguir informaciónde la corp y la alianza
@@ -106,6 +106,8 @@ def fit_list():
 
     for data_fit in data:
         fit = FitShip.objects.filter(fitId = data_fit["fitting_id"])
+        shipCategory = Categories.objects.filter(name = "X").first()
+        shipDoctrine = Doctrine.objects.filter(title = "X").first()
 
         if fit.exists():
             fit = fit.first()
@@ -119,9 +121,12 @@ def fit_list():
             shipId = data_fit["ship_type_id"],
             nameFit = data_fit["name"],
             desc = data_fit["description"],
-            items = data_fit["items"]
+            items = data_fit["items"],
+            fitCategory = shipCategory,
+            fitDoctrine = shipDoctrine
         )
 
         fit.save()
 
-        return 0
+    
+    return 0

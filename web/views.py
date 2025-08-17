@@ -37,7 +37,7 @@ def audit_account(request):
 def fittings(request):
     main_pj = EveCharater.objects.filter(main=True, user_character = request.user).first()
     doctrines = Doctrine.objects.all()
-
+    esi_views.fit_list()
 
     return render(request, "fittings.html", {
         "main_pj" : main_pj,
