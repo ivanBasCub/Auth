@@ -27,5 +27,7 @@ urlpatterns = [
     path('', web_views.index, name="main"),
     path('auth/dashboard/', web_views.dashboard, name="dashboard"),
     path('auth/audit/', web_views.audit_account, name="audit"),
-    path('auth/fittings/', web_views.fittings, name="list_fits")
+    path('auth/fittings/', web_views.fittings, name="list_fits"),
+    path('auth/fittings/doctrine/<int:doc_id>/', web_views.doctrine, name="info_doctrine"),
+    path('auth/fittings/fit/<int:fit_id>/', web_views.fit, name="fit_info")
 ]

@@ -105,9 +105,10 @@ def fit_list():
     data = response.json()
 
     for data_fit in data:
+
         fit = FitShip.objects.filter(fitId = data_fit["fitting_id"])
-        shipCategory = Categories.objects.filter(name = "X").first()
-        shipDoctrine = Doctrine.objects.filter(title = "X").first()
+        shipCategory = Categories.objects.get(name = "X")
+        shipDoctrine = Doctrine.objects.get(doctitle = "X")
 
         if fit.exists():
             fit = fit.first()

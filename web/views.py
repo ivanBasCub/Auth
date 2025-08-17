@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 import esi.views as esi_views
-from doctrines.models import Doctrine
+import sso.views as sso_views
+from doctrines.models import Doctrine, FitShip
 
 # Create your views here.
 def index(request):
@@ -35,11 +36,33 @@ def audit_account(request):
 
 @login_required(login_url='/')
 def fittings(request):
-    main_pj = EveCharater.objects.filter(main=True, user_character = request.user).first()
-    doctrines = Doctrine.objects.all()
-    esi_views.fit_list()
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    doctrines = Doctrine.objects.exclude(doctitle = "X").all()
 
     return render(request, "fittings.html", {
         "main_pj" : main_pj,
         "list_doctrines" : doctrines
+    })
+
+@login_required(login_url="/")
+def doctrine(request, doc_id):
+    doctrine = Doctrine.objects.get(id = doc_id)
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    doctrine_fits = FitShip.objects.filter(fitDoctrine = doctrine).all()
+
+    return render(request, "doctrines.html",{
+        "main_pj" : main_pj,
+        "doctrine" : doctrine,
+        "fits" : doctrine_fits
+    })
+
+@login_required(login_url="/")
+def fit(request, fit_id):
+    fit_data = FitShip.objects.get(id = fit_id)
+
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    return render(request, "fit.html",{
+        "main_pj" : main_pj,
+        "fit" : fit_data
     })

@@ -7,12 +7,12 @@ class Categories(models.Model):
         return self.name
 
 class Doctrine(models.Model):
-    title = models.CharField(max_length=200)
+    doctitle = models.CharField(max_length=200)
     desc = models.TextField(default="")
     doCategory = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, related_name="DoctrineCategory")
 
     def __str__(self):
-        return self.title
+        return self.doctitle
 
 class FitShip(models.Model):
     fitId = models.BigIntegerField(default=0)
