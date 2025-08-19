@@ -60,9 +60,36 @@ def doctrine(request, doc_id):
 @login_required(login_url="/")
 def fit(request, fit_id):
     fit_data = FitShip.objects.get(id = fit_id)
-
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    
+    item_list = fit_data.items
+
+    hi_items = [item for item in item_list if item.get("flag").startswith("HiSlot")]
+    hi_slots = f"img/{len(hi_items)}h.png"
+    med_items = [item for item in item_list if item.get("flag").startswith("MedSlot")]
+    med_slots = f"img/{len(med_items)}m.png"
+    lo_items = [item for item in item_list if item.get("flag").startswith("LoSlot")]
+    lo_slots = f"img/{len(lo_items)}l.png"
+    rig_items = [item for item in item_list if item.get("flag").startswith("RigSlot")]
+    rig_slots = f"img/{len(rig_items)}r.png"
+    subsystem_items = [item for item in item_list if item.get("flag").startswith("SubSystemSlot")]
+    cargo_items = [item for item in item_list if item.get("flag").startswith("Cargo")]
+    drones_items = [item for item in item_list if item.get("flag").startswith("DroneBay")]
+    fighters_items = [item for item in item_list if item.get("flag").startswith("FighterBay")]
+
     return render(request, "fit.html",{
         "main_pj" : main_pj,
-        "fit" : fit_data
+        "fit" : fit_data,
+        "hi_items" : hi_items,
+        "med_items" : med_items,
+        "lo_items" : lo_items,
+        "rig_items" : rig_items,
+        "subsystem_items" : subsystem_items,
+        "cargo_items" : cargo_items,
+        "drones_items" : drones_items,
+        "fighters_items" : fighters_items,
+        "hi_slots" : hi_slots,
+        "med_slots" : med_slots,
+        "lo_slots" : lo_slots,
+        "rig_slots" : rig_slots,
     })

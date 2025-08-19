@@ -5,66 +5,72 @@
 {% endblock %}
 
 {% block content %}
-<main class="row flex-nowrap m-0 bg-dark">
-    <div class="row flex-nowarp vh-100 overflow-auto">
-        <div class="my-3">
-            <div class="card bg-dark text-light">
-                <div class="d-flex justify-content-start align-items-center flex-no-wrap"><img
-                        src="https://images.evetech.net/characters/{{main_pj.characterId}}/portrait?size=64" class="m-0"
-                        style="border-radius: 0.375rem 0px 0px 0.375rem;">
-                    <h4 class="m-1 mx-3">{{main_pj.characterName}}</h4>
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="card bg-dark text-light">
+            <div class="d-flex justify-content-start align-items-center flex-no-wrap"><img
+                    src="https://images.evetech.net/characters/{{main_pj.characterId}}/portrait?size=64" class="m-0"
+                    style="border-radius: 0.375rem 0px 0px 0.375rem;">
+                <h4 class="m-1 mx-3">{{main_pj.characterName}}</h4>
+                <div role="group" class="me-3 ms-auto btn-group">
+                    <a type="button" class="btn-danger btn btn-primary" href="/sso/login/">
+                        <i class="bi bi-plus-circle"></i>
+                    </a>
                 </div>
             </div>
-            <div class="col bg-dark text-light">
-                <div class="mt-4">
-                    <h3 class="_strikeOut_2g7di_1 w-100 text-center mt-3">
-                        Character List
-                    </h3>
-                    <div class="d-flex justify-content-around align-items-center flex-row flex-wrap">
-                        {% for pj in list_pjs %}
-                        <div class="m-2 card bg-dark text-light">
-                            <div class="d-flex flex-column align-items-center p-0 card-body">
-                                <div class="card-img-top" style="height: 256px; width: 256px; position: relative;">
-                                    <img src="https://images.evetech.net/characters/{{pj.characterId}}/portrait?size=256"
-                                        class="card-img-top">
-                                    <img src="https://images.evetech.net/corporations/{{pj.corpId}}/logo?size=64"
-                                        style="position: absolute; bottom: 0px; left: 0px;">
-                                    <img src="https://images.evetech.net/alliances/{{pj.allianceId}}/logo?size=64"
-                                        style="position: absolute; bottom: 0px; right: 0px;">
-                                </div>
-                                <div class="text-center w-100 pt-2 card-title h5">
-                                    <div class="justify-content-between row">
-                                        <div class="w-auto"></div>
-                                        <div class="w-auto">{{pj.characterName}}</div>
-                                        <div class="w-auto"></div>
-                                    </div>
-                                </div>
-                                <div class="mt-2" style="max-height: 256px;">
-                                    <p class="text-center card-text">
-                                        {{pj.corpName}}<br>{{pj.allianceName}}
-                                    </p>
-                                    <p class="text-center card-text">
-                                        Skill Points: 
-                                        <span class="text-center badge bg-danger">
-                                            {{pj.totalSkillPoints}}
-                                        </span>
-                                        <br>
-                                        Isk: 
-                                        <span class="text-center badge bg-danger">
-                                            ${{pj.walletMoney}}
-                                        </span>
-                                    </p>
-                                    <p class="text-center card-text">
-                                        <div role="group" class="w-75 btn-group">
-                                            <a role="button" tabindex="0" href="https://zkillboard.com/character/{{pj.characterId}}" target="_blank" class="btn btn-primary">Zkill</a>
-                                            <a role="button" tabindex="0" href="https://evewho.com/character/{{pj.characterId}}" target="_blank" class="btn btn-primary">EveWho</a>
-                                        </div>
-                                    </p>
+        </div>
+        <div class="col bg-dark text-light">
+            <div class="mt-4">
+                <h3 class="_strikeOut_2g7di_1 w-100 text-center mt-3">
+                    Character List
+                </h3>
+                <div class="d-flex justify-content-around align-items-center flex-row flex-wrap">
+                    {% for pj in list_pjs %}
+                    <div class="m-2 card bg-dark text-light">
+                        <div class="d-flex flex-column align-items-center p-0 card-body">
+                            <div class="card-img-top" style="height: 256px; width: 256px; position: relative;">
+                                <img src="https://images.evetech.net/characters/{{pj.characterId}}/portrait?size=256"
+                                    class="card-img-top">
+                                <img src="https://images.evetech.net/corporations/{{pj.corpId}}/logo?size=64"
+                                    style="position: absolute; bottom: 0px; left: 0px;">
+                                <img src="https://images.evetech.net/alliances/{{pj.allianceId}}/logo?size=64"
+                                    style="position: absolute; bottom: 0px; right: 0px;">
+                            </div>
+                            <div class="text-center w-100 pt-2 card-title h5">
+                                <div class="justify-content-between row">
+                                    <div class="w-auto"></div>
+                                    <div class="w-auto">{{pj.characterName}}</div>
+                                    <div class="w-auto"></div>
                                 </div>
                             </div>
+                            <div class="mt-2" style="max-height: 256px;">
+                                <p class="text-center card-text">
+                                    {{pj.corpName}}<br>{{pj.allianceName}}
+                                </p>
+                                <p class="text-center card-text">
+                                    Skill Points:
+                                    <span class="text-center badge bg-danger">
+                                        {{pj.totalSkillPoints}}
+                                    </span>
+                                    <br>
+                                    Isk:
+                                    <span class="text-center badge bg-danger">
+                                        ${{pj.walletMoney}}
+                                    </span>
+                                </p>
+                                <p class="text-center card-text">
+                                <div role="group" class="w-75 btn-group">
+                                    <a role="button" tabindex="0"
+                                        href="https://zkillboard.com/character/{{pj.characterId}}" target="_blank"
+                                        class="btn btn-primary">Zkill</a>
+                                    <a role="button" tabindex="0" href="https://evewho.com/character/{{pj.characterId}}"
+                                        target="_blank" class="btn btn-primary">EveWho</a>
+                                </div>
+                                </p>
+                            </div>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

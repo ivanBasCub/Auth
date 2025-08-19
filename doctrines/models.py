@@ -17,8 +17,12 @@ class Doctrine(models.Model):
 class FitShip(models.Model):
     fitId = models.BigIntegerField(default=0)
     shipId = models.BigIntegerField(default=0)
+    shipName = models.CharField(max_length=100, default="")
     nameFit = models.CharField(max_length=200)
     desc = models.TextField(default="")
     items = models.JSONField(default=dict)
     fitCategory = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, related_name="fitCategory")
     fitDoctrine = models.ForeignKey(Doctrine, on_delete=models.DO_NOTHING, related_name="fitDoctrine")
+
+    def __str__(self):
+        return self.nameFit

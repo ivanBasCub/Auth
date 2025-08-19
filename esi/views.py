@@ -106,13 +106,17 @@ def fit_list():
 
     for data_fit in data:
 
-        fit = FitShip.objects.filter(fitId = data_fit["fitting_id"])
+        fit = FitShip.objects.get(fitId = data_fit["fitting_id"])
         shipCategory = Categories.objects.get(name = "X")
         shipDoctrine = Doctrine.objects.get(doctitle = "X")
 
-        if fit.exists():
+        item_list = data_fit["items"]
+
+        for item in item_list:
+            item["itemName"] = item_name(item["type_id"])
+
+        if fit:
             fit = fit.first()
-            fit.items = data_fit["items"]
 
             fit.save()
             return 1
@@ -120,6 +124,7 @@ def fit_list():
         fit = FitShip.objects.create(
             fitId = data_fit["fitting_id"],
             shipId = data_fit["ship_type_id"],
+            shipName = item_name(data_fit["ship_type_id"]),
             nameFit = data_fit["name"],
             desc = data_fit["description"],
             items = data_fit["items"],
@@ -131,3 +136,18 @@ def fit_list():
 
     
     return 0
+
+def item_name(item_ID):
+
+    headers ={
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2020-01-01",
+        "X-Tenant": "",
+        "Accept": "application/json"
+    }
+
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_ID}", headers)
+    data = response.json()
+
+    return data["name"]

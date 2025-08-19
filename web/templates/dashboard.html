@@ -5,82 +5,80 @@
 {% endblock %}
 
 {% block content %}
-<main class="row flex-nowrap m-0 bg-dark">
-    <div class="row flex-nowarp vh-100 overflow-auto">
-        <div class="nav-padding col flex-nowrap vh-100 overflow-auto">
-            <div class="my-3">
-                <div class="row">
-                    <div class="col-12 col-xl-8 mb-3" id="panel-character">
-                        <div class="card h-100 bg-dark text-light">
-                            <div class="card-body">
-                                <div class="text-center">
-                                    <h4 class="ms-auto me-auto mb-3">Personajes</h4>
-                                </div>
-                                <div>
-                                    <div class="height: 300px; overflow-y:auto;">
-                                        <div class="d-flex">
-                                            <a href="/sso/login/" class="btn btn-danger flex-fill m-1"
-                                                title="Agregar Personaje">
-                                                <span class="d-md-inline m-2">Agregar Personaje</span>
-                                            </a>
-                                            <a href="/account/characters/main/" class="btn btn-danger disabled flex-fill m-1" title="Cambiar Personaje Principal">
-                                                <span class="d-md-inline m-2">Cambiar Personaje Principal</span>
-                                            </a>
-                                        </div>
-                                        <table class="table text-light">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-center"></th>
-                                                    <th class="text-center">Nombre</th>
-                                                    <th class="text-center">Corporacion</th>
-                                                    <th class="text-center">Alianza</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for alt in list_alts %}
-                                                <tr>
-                                                    <td class="text-center">
-                                                        <img class="rounded-circle" src="https://images.evetech.net/characters/{{alt.characterId}}/portrait?size=32">
-                                                    </td>
-                                                    <td class="text-center">{{alt.characterName}}</td>
-                                                    <td class="text-center">{{alt.corpName}}</td>
-                                                    <td class="text-center">{{alt.allianceName}}</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="row">
+            <div class="col-12 col-xl-8 mb-3" id="panel-character">
+                <div class="card h-100 bg-dark text-light">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <h4 class="ms-auto me-auto mb-3">Personajes</h4>
                         </div>
-                    </div>
-                    <div class="col-12 col-xl-4 mb-3" id="panel-roles">
-                        <div class="card h-100 bg-dark text-light">
-                            <div class="card-body">
-                                <div class="text-center">
-                                    <h4 class="ms-auto me-auto mb-3"> Membership</h4>
+                        <div>
+                            <div class="height: 300px; overflow-y:auto;">
+                                <div class="d-flex">
+                                    <a href="/sso/login/" class="btn btn-danger flex-fill m-1"
+                                        title="Agregar Personaje">
+                                        <span class="d-md-inline m-2">Agregar Personaje</span>
+                                    </a>
+                                    <a href="/account/characters/main/" class="btn btn-danger disabled flex-fill m-1"
+                                        title="Cambiar Personaje Principal">
+                                        <span class="d-md-inline m-2">Cambiar Personaje Principal</span>
+                                    </a>
                                 </div>
-                                <div>
-                                    <div class="height: 300px; overflow-y:auto;">
-                                        <h5 class="text-center">State: Member</h5>
-                                        <table class="table text-light">
-                                            <tbody>
-                                                {% for group in groups %}
-                                                <tr>
-                                                    <td class="text-center"> {{group}}</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                <table class="table text-light">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center"></th>
+                                            <th class="text-center">Nombre</th>
+                                            <th class="text-center">Corporacion</th>
+                                            <th class="text-center">Alianza</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for alt in list_alts %}
+                                        <tr>
+                                            <td class="text-center">
+                                                <img class="rounded-circle"
+                                                    src="https://images.evetech.net/characters/{{alt.characterId}}/portrait?size=32">
+                                            </td>
+                                            <td class="text-center">{{alt.characterName}}</td>
+                                            <td class="text-center">{{alt.corpName}}</td>
+                                            <td class="text-center">{{alt.allianceName}}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-
+            </div>
+            <div class="col-12 col-xl-4 mb-3" id="panel-roles">
+                <div class="card h-100 bg-dark text-light">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <h4 class="ms-auto me-auto mb-3"> Membership</h4>
+                        </div>
+                        <div>
+                            <div class="height: 300px; overflow-y:auto;">
+                                <h5 class="text-center">State: Member</h5>
+                                <table class="table text-light">
+                                    <tbody>
+                                        {% for group in groups %}
+                                        <tr>
+                                            <td class="text-center"> {{group}}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 </main>
 {% endblock %}

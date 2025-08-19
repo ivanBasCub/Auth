@@ -3,13 +3,37 @@
 
 {% block style %}
 <title>Equipamiento - Helgast Auth</title>
+<link rel="stylesheet" href="{% static 'css/fit.css' %}">
 {% endblock %}
 
 {% block content %}
-<main class="row flex-nowrap m-0 bg-dark">
-    <div class="row flex-nowarp vh-100 overflow-auto">
-        <div class="my-3">
-            <div class="row">
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="modal fade" id="eftModal" tabindex="-1" aria-labelledby="eftModalTitle" style="display: none;"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content bg-dark text-light">
+                    <div class="modal-header">
+                        <div class="modal-title fs-5" id="eftModalLongTitle">{{fit.nameFit}}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="eft-fitting" style="margin-bottom: 1rem;">
+                            EFT Formatted Fitting
+                        </label>
+                        <textarea id="eft-fitting" class="bg-dark text-light" rows="25" onclick="this.select()" readonly>
+                        </textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
                 <div class="card card-primary mb-3 bg-dark text-light">
                     <div class="card-header">
                         <div class="card-title mb-0">Información del Equipamiento</div>
@@ -28,36 +52,200 @@
                         </dl>
                     </div>
                 </div>
-                <div class="card card-primary mb-3 bg-dark text-light">
+            </div>
+            <div class="col-md-9">
+                <div class="card card-default mb-3 bg-dark text-light">
                     <div class="card-header">
-                        <div class="card-title mb-0">Character Base Skill Checks</div>
+                        <div class="card-title mb-0">Equipamiento</div>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-danger" style="
-                        -webkit-animation: progress-bar-stripes 2s linear infinite;
-                        animation: progress-bar-stripes 2s linear infinite;
-                                animation-direction: alternate;
-                                background-image: linear-gradient(
-                                    45deg,
-                                    rgba(255, 0, 0, 0.15) 25%,
-                                    transparent 25%,
-                                    transparent 50%,
-                                    rgba(255, 0, 0, 0.15) 50%,
-                                    rgba(255, 0, 0, 0.15) 75%,
-                                    transparent 75%,
-                                    transparent 50%
-                                );
-                                background-size: 40px 40px">
-                            <p class="text-center m-0">
-                                Habilidades básicas necesarias para <b>sentarte en la nave</b> y <b>usar los modulos</b>.
-                                <br>
-                                Las skills mejoradas <b>son</b> son necesarias para usar correctamente el fiteo en flota.
-                            </p>
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6">
+                                <div id="Fitting_Panel">
+                                    <div id="mask"
+                                        style="position:absolute; left: 0; top: 0; width: 398px; height: 398px; z-index: -1;">
+                                        <img class="rounded"
+                                            style="position:absolute; left: 0; top: 0; height: 398px; width: 398px; border: 0;"
+                                            src="{% static 'img/tyrannis.png' %}" alt>
+                                    </div>
+                                    <div id="highx">
+                                        <img src="{% static hi_slots %}">
+                                    </div>
+                                    {% for high in hi_items %}
+                                    <div id="high{{forloop.counter}}">
+                                        <img class="rounded" src="https://images.evetech.net/types/{{high.type_id}}/icon?size=32">
+                                    </div>
+                                    {% endfor %}
+                                    <div id="midx">
+                                        <img src="{% static med_slots %}">
+                                    </div>
+                                    {% for mid in med_items %}
+                                    <div id="mid{{forloop.counter}}">
+                                        <img class="rounded"
+                                            src="https://images.evetech.net/types/{{mid.type_id}}/icon?size=32">
+                                    </div>
+                                    {% endfor %}
+                                    <div id="lowx">
+                                        <img src="{% static lo_slots %}">
+                                    </div>
+                                    {% for low in lo_items %}
+                                    <div id="low{{forloop.counter}}">
+                                        <img class="rounded"
+                                            src="https://images.evetech.net/types/{{low.type_id}}/icon?size=32">
+                                    </div>
+                                    {% endfor %}
+                                    <div id="rigxx">
+                                        <img src="{% static rig_slots %}">
+                                    </div>
+                                    {% for rig in rig_items %}
+                                    <div id="rig{{forloop.counter}}">
+                                        <img class="rounded"
+                                            src="https://images.evetech.net/types/{{rig.type_id}}/icon?size=32">
+                                    </div>
+                                    {% endfor %}
+                                    {% if subsystem_items %}
+                                    <div id="subx">
+                                        <img src="{% static 'img/4s.png' %}">
+                                    </div>
+                                    {% for sub in subsystem_items %}
+                                    <div id="sub{{forloop.counter}}">
+                                        <img class="rounded"
+                                            src="https://images.evetech.net/types/{{sub.type_id}}/icon?size=32">
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    {% endif %}
+                                    <div id="bigship">
+                                        <img class="rounded"
+                                            src="https://images.evetech.net/types/{{fit.shipId}}/render?size=256"
+                                            style="height: 256px; width: 256px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-6 text-center">
+                                <div class="text-center" style="margin-bottom: 1rem;">
+                                    <h3>{{fit.nameFit}}</h3>
+                                </div>
+                                <div class="card card-warning mb-3 bg-dark text-light">
+                                    <div class="card-header">
+                                        <div class="card-title mb-0">
+                                            Notas del Equipamiento
+                                        </div>
+                                    </div>
+                                    <div class="card-body text-start">
+                                        <p>{{fit.nameFit}}</p>
+                                        <p>{{fit.desc}}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="card card-primary mb-3 bg-dark text-light">
+                <div class="card card-default mb-3 bg-dark text-light">
+                    <div class="card-header">
+                        <div class="card-title mb-0">
+                            Detalles del Fit
+                            <div class="float-end">
+                                <span data-toggle="modal" data-target="#eftModal">
+                                    <button class="btn btn-sm btn-danger" id="copyEftButton" data-bs-toggle="modal"
+                                        data-bs-target="#eftModal" data-bs-tooltip="aa-fittings"
+                                        data-bs-original-title="Copiar equipamiento (EFT)">
+                                        Copiar equipamiento (EFT)
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item list-group-item-warning">Tipo</li>
+                            <li class="list-group-item bg-dark"><img class="rounded"
+                                    src="https://images.evetech.net/types/{{fit.shipId}}/render?size=32"></li>
+                            
+                            {% if subsystem_items %}
+                            <li class="list-group-item list-group-item-warning">Subsistemas</li>
+                            {% for sub in subsystem_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{sub.type_id}}/icon?size=32">
+                                    {{sub.itemName}}
+                                </li>
+                            {% endfor %}
+                            {% else %}
+                            {% endif %}
 
+                            {% if hi_items %}
+                            <li class="list-group-item list-group-item-warning">Slots Superiores</li>
+                                {% for high in hi_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{high.type_id}}/icon?size=32">
+                                    {{high.itemName}}
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                            {% endif %}
+                            
+                            {% if med_items %}
+                            <li class="list-group-item list-group-item-warning">Slots Intermedios</li>
+                                {% for mid in med_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{mid.type_id}}/icon?size=32">
+                                    {{mid.itemName}}
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                            {% endif %}
+
+                            {% if lo_items %}
+                            <li class="list-group-item list-group-item-warning">Slots Inferiores</li>
+                            {% for low in lo_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{low.type_id}}/icon?size=32">
+                                    {{low.itemName}}
+                                </li>
+                            {% endfor %}
+                            {% else %}
+                            {% endif %}
+                            
+                            {% if rig_items %}
+                            <li class="list-group-item list-group-item-warning">Rigs</li>
+                            {% for rig in rig_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{rig.type_id}}/icon?size=32">
+                                    {{rig.itemName}}
+                                </li>
+                            {% endfor %}
+                            {% else %}
+                            {% endif %}
+
+                            {% if cargo_items %}
+                            <li class="list-group-item list-group-item-warning">Cargo</li>
+                            {% for cargo in cargo_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{cargo.type_id}}/icon?size=32">
+                                    {{cargo.itemName}} x{{cargo.quantity}} 
+                                </li>
+                            {% endfor %}
+                            {% else %}
+                            {% endif %}
+
+                            {% if drones_items %}
+                            <li class="list-group-item list-group-item-warning">Drones</li>
+                            {% for drone in drones_items %}
+                                <li class="list-group-item bg-dark text-light">
+                                    <img class="rounded" src="https://images.evetech.net/types/{{drone.type_id}}/icon?size=32">
+                                    {{drone.itemName}} x{{drone.quantity}} 
+                                </li>
+                            {% endfor %}
+                            {% else %}
+                            {% endif %}
+                            
+                            {% if fighters_items %}
+                            <li class="list-group-item list-group-item-warning">Figthers</li>
+                            {% else %}
+                            {% endif %}
+                            
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
