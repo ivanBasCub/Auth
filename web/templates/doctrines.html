@@ -60,7 +60,11 @@
                                         {{fit.shipName}}
                                     </td>
                                     <td>
-                                        {{fit.fitCategory.name}}
+                                        {% if fit.fitCategory.all %}
+                                            {% for cat in fit.fitCategory.all %}
+                                                {{ cat.name }},
+                                            {% endfor %}
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {{fit.desc}}

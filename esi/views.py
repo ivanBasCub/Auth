@@ -100,46 +100,48 @@ def fit_list():
         "Accept": "application/json",
         "Authorization": f"Bearer {character.accessToken}"
     }
+    
+    response = requests.get(
+        f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/fittings',
+        headers = headers
+    )
 
-    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/fittings', headers= headers)
+    if response.status_code != 200:
+        return 1
+    
     data = response.json()
+    doctrine = Doctrine.objects.get(doctitle = "undoctrine")
 
-    for data_fit in data:
+    for fit_data in data:
+        check = FitShip.objects.filter(fitId = fit_data["fitting_id"])
 
-        fit = FitShip.objects.get(fitId = data_fit["fitting_id"])
-        shipCategory = Categories.objects.get(name = "X")
-        shipDoctrine = Doctrine.objects.get(doctitle = "X")
-
-        item_list = data_fit["items"]
+        item_list = fit_data["items"]
 
         for item in item_list:
             item["itemName"] = item_name(item["type_id"])
 
-        if fit:
-            fit = fit.first()
+        if check.exists():
+            fit = FitShip.objects.get(fitId = fit_data["fitting_id"])
+            fit.items = item_list
+            fit.save()
+        else:
+            fit = FitShip.objects.create(
+                fitId = fit_data["fitting_id"],
+                shipId = fit_data["ship_type_id"],
+                shipName = item_name(fit_data["ship_type_id"]),
+                nameFit = fit_data["name"],
+                desc = fit_data["description"],
+                items = item_list,
+                fitDoctrine = doctrine
+            )
 
             fit.save()
-            return 1
-        
-        fit = FitShip.objects.create(
-            fitId = data_fit["fitting_id"],
-            shipId = data_fit["ship_type_id"],
-            shipName = item_name(data_fit["ship_type_id"]),
-            nameFit = data_fit["name"],
-            desc = data_fit["description"],
-            items = data_fit["items"],
-            fitCategory = shipCategory,
-            fitDoctrine = shipDoctrine
-        )
 
-        fit.save()
-
-    
     return 0
 
 def item_name(item_ID):
 
-    headers ={
+    headers_2 = {
         "Accept-Language": "",
         "If-None-Match": "",
         "X-Compatibility-Date": "2020-01-01",
@@ -147,7 +149,7 @@ def item_name(item_ID):
         "Accept": "application/json"
     }
 
-    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_ID}", headers)
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_ID}", headers = headers_2)
     data = response.json()
 
     return data["name"]

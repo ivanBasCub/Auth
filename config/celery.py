@@ -19,7 +19,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'update_fits': {
         'task' : 'esi.tasks.fits',
-        'schedule': 300,
+        'schedule': 3600,
         'args' : ()
     },
     'update_tokens': {

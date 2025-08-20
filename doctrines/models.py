@@ -2,6 +2,7 @@ from django.db import models
 
 class Categories(models.Model):
     name = models.CharField(max_length=200)
+    type = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -9,7 +10,10 @@ class Categories(models.Model):
 class Doctrine(models.Model):
     doctitle = models.CharField(max_length=200)
     desc = models.TextField(default="")
-    doCategory = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, related_name="DoctrineCategory")
+    docCategory = models.ManyToManyField(
+        'Categories',
+        related_name="DoctrineCategory"
+    )
 
     def __str__(self):
         return self.doctitle
@@ -21,7 +25,7 @@ class FitShip(models.Model):
     nameFit = models.CharField(max_length=200)
     desc = models.TextField(default="")
     items = models.JSONField(default=dict)
-    fitCategory = models.ForeignKey(Categories, on_delete=models.DO_NOTHING, related_name="fitCategory")
+    fitCategory = models.ManyToManyField('Categories', related_name="fitCategory")
     fitDoctrine = models.ForeignKey(Doctrine, on_delete=models.DO_NOTHING, related_name="fitDoctrine")
 
     def __str__(self):

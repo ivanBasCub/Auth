@@ -29,5 +29,8 @@ urlpatterns = [
     path('auth/audit/', web_views.audit_account, name="audit"),
     path('auth/fittings/', web_views.fittings, name="list_fits"),
     path('auth/fittings/doctrine/<int:doc_id>/', web_views.doctrine, name="info_doctrine"),
-    path('auth/fittings/fit/<int:fit_id>/', web_views.fit, name="fit_info")
+    path('auth/fittings/fit/<int:fit_id>/', web_views.fit, name="fit_info"),
+    path('auth/fittings/admin/', web_views.admin_doctrines, name="admin fittings"),
+    path('auth/fittings/admin/doctrine/mod/<int:doctrine_id>/', web_views.mod_doctrine, name="mod_doctrine"),
+    path('auth/fittings/admin/doctrine/add/', web_views.create_doctrine_view, name="new_doctrine")
 ]

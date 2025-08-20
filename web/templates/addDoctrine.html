@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<title>New Doctrine - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card card-default mb-3 bg-dark text-light">
+                    <div class="card-header">
+                        <div class="card-title mb-0">Datos de la doctrina</div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <div class="form-group">
+                                <label for="doctrineTitle">Nombre de la doctrina</label>
+                                <input type="text" class="form-control" id="doctrineTitle" name="doctitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="doctrineDesc">Descripción de la doctrina</label>
+                                <textarea id="doctrineDesc" class="form-control" name="desc"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="doctrineCategory">Categorias de la doctrina</label>
+                                <select class="form-control" id="doctrineCategory" name="categoty">
+                                    <option value="">Sin Categoria</option>
+                                </select>
+                            </div>
+                            <div class="form-group d-flex justify-content-end m-1">
+                                <button type="submit" class="btn btn-danger">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <form>
+                    <div class="card card-default mb-3 bg-dark text-light">
+                        <div class="card-header">
+                            <div class="card-title mb-0">Fits</div>
+                            <div class="float-end">
+                                <a class="btn btn-danger" href="#">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-dark table-hover dataTable no-footer">
+                                <thead>
+                                    <tr>
+                                        <th class="col"></th>
+                                        <th class="col">Nombre</th>
+                                        <th class="col">Tipo</th>
+                                        <th class="col">Categoria</th>
+                                        <th class="col">Descripcion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fit in fits %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input" name="fit"
+                                                value="{{fit.id}}">
+                                        </td>
+                                        <td>
+                                            <a class="text-decoration-none" href="/auth/fittings/fit/{{fit.id}}">
+                                                <span class="d-block" style="min-width: 400px;">
+                                                    <span class="m-2" style="width: 32px; height: 32px;">
+                                                        <img src="https://images.evetech.net/types/{{fit.shipId}}/render?size=32"
+                                                            class="rounded" height="32" width="32">
+                                                    </span>
+                                                    <span>{{fit.nameFit}}</span>
+                                                </span>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {{fit.shipName}}
+                                        </td>
+                                        <td>
+                                            {% if fit.fitCategory.all %}
+                                                {% for cat in fit.fitCategory.all %}
+                                                    {{ cat.name }},
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{fit.desc}}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
