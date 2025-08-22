@@ -40,14 +40,19 @@
                                     {% for doctrine in list_doctrines %}
                                     <tr>
                                         <td class="col">
-                                            <a class="text-decoration-none text-light" href="/auth/fittings/doctrine/{{doctrine.id}}">
+                                            <a class="text-decoration-none text-light"
+                                                href="/auth/fittings/doctrine/{{doctrine.id}}">
                                                 <span class="d-block" style="min-width: 250px;">
                                                     <span>{{doctrine.doctitle}}</span>
                                                 </span>
                                             </a>
                                         </td>
                                         <td class="col">
-                                            <p>{{doctrine.doCategory.name}}</p>
+                                            <p> 
+                                                {% if doctrine.docCategory.all %}
+                                                    {{doctrine.docCategory.all|join:" "}}
+                                                {% endif %}
+                                            </p>
                                         </td>
                                         <td class="col">
                                             <p>{{doctrine.desc}}</p>

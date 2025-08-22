@@ -31,6 +31,11 @@ urlpatterns = [
     path('auth/fittings/doctrine/<int:doc_id>/', web_views.doctrine, name="info_doctrine"),
     path('auth/fittings/fit/<int:fit_id>/', web_views.fit, name="fit_info"),
     path('auth/fittings/admin/', web_views.admin_doctrines, name="admin fittings"),
+    path('auth/fittings/admin/doctrine/add/', web_views.add_doctrine, name="new_doctrine"),
     path('auth/fittings/admin/doctrine/mod/<int:doctrine_id>/', web_views.mod_doctrine, name="mod_doctrine"),
-    path('auth/fittings/admin/doctrine/add/', web_views.create_doctrine_view, name="new_doctrine")
+    path('auth/fittings/admin/doctrine/del/<int:doctrine_id>/', web_views.del_doctrine, name="del_doctrine"),
+    path('auth/fittings/admin/category/add/', web_views.add_category, name="new_category"),
+    path('auth/fittings/admin/category/mod/<int:category_id>/', web_views.mod_category, name="mod_category"),
+    path('auth/fittings/admin/category/del/<int:category_id>/', web_views.del_category, name="del_category"),
+    path('auth/fittings/fit/mod/<int:fit_id>/', web_views.mod_fit, name="mod_fit")
 ]

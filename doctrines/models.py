@@ -26,7 +26,7 @@ class FitShip(models.Model):
     desc = models.TextField(default="")
     items = models.JSONField(default=dict)
     fitCategory = models.ManyToManyField('Categories', related_name="fitCategory")
-    fitDoctrine = models.ForeignKey(Doctrine, on_delete=models.DO_NOTHING, related_name="fitDoctrine")
+    fitDoctrine = models.ManyToManyField('Doctrine', related_name="fitDoctrine")
 
     def __str__(self):
         return self.nameFit

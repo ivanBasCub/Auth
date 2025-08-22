@@ -82,7 +82,7 @@ def update_create_user(request, tokens, user_info):
 
     try:
         # Caso de que el usuario y el pj existan en la BBDD
-        user = User.objects.get(username = user_info["CharacterName"])
+        user = User.objects.get(username = user_info["CharacterName"].replace(" ","_"))
         refresh_eve_character(user_info, tokens, expiration)
 
         login(request,user)
@@ -93,7 +93,7 @@ def update_create_user(request, tokens, user_info):
         if check.exists():
             return redirect("../../")
         
-        user = User.objects.create(username = user_info["CharacterName"])
+        user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
         user.save()
 
         save_eve_character(user, user_info, tokens, expiration)

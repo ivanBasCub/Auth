@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load filters %}
+
+{% block style %}
+<title>{{fit.nameFit}} - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="row d-flex justify-content-center">
+            <div class="col-md-8">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="card card-default mb-3 bg-dark text-light">
+                        <div class="card-header">
+                            <div class="card-title mb-0">Modificar Fit</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label for="nameFit" class="form-label">Nombre del Fit</label>
+                                <input type="text" class="form-control" id="nameFit" name="nameFit"
+                                    value="{{fit.nameFit}}" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="fitDesc" class="form-label">Descripcion</label>
+                                <textarea class="form-control" id="fitDesc" name="fitDesc" rows="3">{{fit.desc}}</textarea>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="fitCategory" class="form-label">Categoria</label>
+                                <select class="form-select" id="fitCategory" name="fitCategory" required>
+                                    <option value="" disabled>Selecciona una categoria</option>
+                                    {% for category in categories %}
+                                    <option value="{{category.id}}" {% if category in fit.fitCategory.all %} selected {% endif %}>{{category.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <button type="submit" class="btn btn-danger">Guardar Cambios</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

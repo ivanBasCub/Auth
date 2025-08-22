@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load filters %}
 <!DOCTYPE html>
 <html>
 
@@ -35,8 +35,12 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/auth/fittings/">Doctrinas</a></li>
                             <li><a class="dropdown-item" href="#">Segimiento de Flotas</a></li>
-                            <li><a class="dropdown-item" href="#">Fats</a></li>
-                            <li><a class="dropdown-item" href="/auth/fittings/admin/">Organizar Doctrinas</a></li>
+                            {% if user|has_group:"FC" %}
+                                <li><a class="dropdown-item" href="#">Fats</a></li>
+                            {% endif %}
+                            {% if user|has_group:"MainFC" %}
+                                <li><a class="dropdown-item" href="/auth/fittings/admin/">Organizar Doctrinas</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

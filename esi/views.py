@@ -110,7 +110,6 @@ def fit_list():
         return 1
     
     data = response.json()
-    doctrine = Doctrine.objects.get(doctitle = "undoctrine")
 
     for fit_data in data:
         check = FitShip.objects.filter(fitId = fit_data["fitting_id"])
@@ -132,7 +131,6 @@ def fit_list():
                 nameFit = fit_data["name"],
                 desc = fit_data["description"],
                 items = item_list,
-                fitDoctrine = doctrine
             )
 
             fit.save()
