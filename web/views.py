@@ -5,11 +5,13 @@ import esi.views as esi_views
 import sso.views as sso_views
 from doctrines.models import Doctrine, FitShip, Categories
 from django.db.models import Q
+from ban.models import BannedCharacter, BanCategory
 
 # Create your views here.
 def index(request):
     return render(request, "index.html")
 
+# Vista principal del usuario
 @login_required(login_url='/')
 def dashboard(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
@@ -23,6 +25,7 @@ def dashboard(request):
         "groups" : request.user.groups.all()
     })
 
+# Vista de los personajes del usuario
 @login_required(login_url='/')
 def audit_account(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
@@ -35,6 +38,7 @@ def audit_account(request):
         "list_pjs" : list_pjs
     })
 
+# Zona de Fiteos
 @login_required(login_url='/')
 def fittings(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -45,6 +49,7 @@ def fittings(request):
         "list_doctrines" : doctrines
     })
 
+# Vista de una doctrina
 @login_required(login_url="/")
 def doctrine(request, doc_id):
     doctrine = Doctrine.objects.get(id = doc_id)
@@ -57,6 +62,7 @@ def doctrine(request, doc_id):
         "fits" : doctrine_fits
     })
 
+# Vista de un fiteo
 @login_required(login_url="/")
 def fit(request, fit_id):
     def items_filter(flag):
@@ -121,6 +127,7 @@ def fit(request, fit_id):
         "etf" : etf_str
     })
 
+# Zona de administración de doctrinas
 @login_required(login_url="/")
 def admin_doctrines(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -133,6 +140,7 @@ def admin_doctrines(request):
         "list_categories" : list_categories
     })
 
+# Nueva doctrina
 @login_required(login_url="/")
 def add_doctrine(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -172,6 +180,7 @@ def add_doctrine(request):
             "categories" : doctrines_categories
         })
 
+# Modificar doctrina
 @login_required(login_url="/")
 def mod_doctrine(request, doctrine_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -183,8 +192,9 @@ def mod_doctrine(request, doctrine_id):
         doctrine_fits = request.POST.getlist("fit")
         doctrine_name = request.POST.get("doctrineTitle","").strip()
         doctrine_desc = request.POST.get("doctrineDesc","").strip()
-        doctrine_category = int(request.POST.get("doctrineCategory",0))
+        doctrine_category = int(request.POST.get("categoty",0))
 
+        print(doctrine_category, "/ ", request.POST.get("categoty"))
         if doctrine_name != "":
             doctrine.doctitle = doctrine_name
             doctrine.desc = doctrine_desc
@@ -213,6 +223,7 @@ def mod_doctrine(request, doctrine_id):
             "fits" : fits
         })
 
+# Eliminar doctrina
 @login_required(login_url="/")
 def del_doctrine(request, doctrine_id):
     try:
@@ -223,6 +234,7 @@ def del_doctrine(request, doctrine_id):
 
     return redirect("/auth/fittings/admin/")
 
+# Añadir categoría
 @login_required(login_url="/")
 def add_category(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -242,6 +254,7 @@ def add_category(request):
             "main_pj" : main_pj
         })
 
+# Modificar categoría
 @login_required(login_url="/")
 def mod_category(request, category_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -263,6 +276,7 @@ def mod_category(request, category_id):
             "category" : category
         })
 
+# Eliminar categoría
 @login_required(login_url="/")
 def del_category(request, category_id):
     try:
@@ -274,6 +288,7 @@ def del_category(request, category_id):
 
     return redirect("/auth/fittings/admin/")
 
+# Modificar fiteo
 @login_required(login_url="/")
 def mod_fit(request, fit_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -303,3 +318,99 @@ def mod_fit(request, fit_id):
             "fit" : fit_data,
             "categories" : category_list
         })
+    
+# Zona de administración de corp
+
+# Lista de baneos
+@login_required(login_url="/")
+def banlist(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    banlist = BannedCharacter.objects.all()
+    categories = BanCategory.objects.all()
+    
+    return render(request, "banlist.html",{
+        "main_pj" : main_pj,
+        "banlist" : banlist,
+        "categories" : categories
+    })
+
+# Añadir baneo
+@login_required(login_url="/")
+def add_ban(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_pjs = EveCharater.objects.filter(main = True).all()
+    list_categories = BanCategory.objects.all()
+
+    if request.method == "POST":
+        pj_id = int(request.POST.get("character_id",0).strip())
+        reason = request.POST.get("reason","").strip()
+        pj = EveCharater.objects.filter(characterId = pj_id).first()
+        category_id = int(request.POST.get("ban_category",0).strip())
+        category = BanCategory.objects.filter(id = category_id).first()
+
+        if pj_id != 0 and reason != "":
+            try:
+                new_ban = BannedCharacter(character_id = pj_id, character_name = pj.characterName, reason = reason, banned_by = request.user, ban_category = category)
+                new_ban.save()
+            except EveCharater.DoesNotExist:
+                pass
+
+        return redirect("/auth/corp/banlist/")
+    else:
+        return render(request, "addBan.html",{
+            "main_pj" : main_pj,
+            "list_pjs" : list_pjs,
+            "categories" : list_categories
+        })
+
+# Eliminar baneo  
+@login_required(login_url="/")
+def del_ban(request, ban_id):
+    try:
+        ban = BannedCharacter.objects.get(id=ban_id)
+        ban.delete()
+    except BannedCharacter.DoesNotExist:
+        pass
+
+    return redirect("/auth/corp/banlist/")
+
+# Lista de categorías de baneos
+@login_required(login_url="/")
+def ban_categories(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    categories = BanCategory.objects.all()
+
+    return render(request, "banCategoryList.html",{
+        "main_pj" : main_pj,
+        "categories" : categories
+    })
+
+# Añadir categoría de baneo
+@login_required(login_url="/")
+def add_ban_category(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        category_name = request.POST.get("categoryName","").strip()
+
+        if category_name != "":
+            new_category = BanCategory(name=category_name)
+            new_category.save()
+
+        return redirect("/auth/corp/banlist/categories/")
+
+    else:
+        return render(request, "addBanCategory.html",{
+            "main_pj" : main_pj
+        })
+
+@login_required(login_url="/")
+def del_ban_category(request, category_id):
+    try:
+        category = BanCategory.objects.get(id=category_id)
+        if category.name != "uncategorized":
+            category.delete()
+    except BanCategory.DoesNotExist:
+        pass
+
+    return redirect("/auth/corp/banlist/categories/")

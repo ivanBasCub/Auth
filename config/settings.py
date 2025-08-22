@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'esi',
     'web',
     'sso',
-    'doctrines'
+    'doctrines',
+    'ban',
 ]
 
 MIDDLEWARE = [

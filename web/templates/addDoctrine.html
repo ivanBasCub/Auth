@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block style %}
 <title>New Doctrine - Helgast Auth</title>
@@ -46,7 +47,14 @@
                         <div class="card-title mb-0">Fits</div>
                     </div>
                     <div class="card-body">
-                        <table class="table table-dark table-hover dataTable no-footer">
+                        <div class="text-start mb-3 col-md-4">
+                            <label class="d-flex align-items-center gap-2">
+                                Buscar:
+                                <input type="search" id="fitTable_filter" class="form-control form-control-sm"
+                                    placeholder aria-controls="fitTable" />
+                            </label>
+                        </div>
+                        <table class="table table-dark table-hover dataTable no-footer" id="fitTable">
                             <thead>
                                 <tr>
                                     <th class="col"></th>
@@ -95,4 +103,5 @@
         </form>
     </div>
 </main>
+<script src="{% static 'js/fitFilter.js' %}"></script>
 {% endblock %}

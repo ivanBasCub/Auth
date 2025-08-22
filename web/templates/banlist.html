@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block style %}
+<title>Ban List - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-default mb-3 bg-dark text-light">
+                    <div class="card-header">
+                        <div class="card-title mb-0">Ban List
+                            <div class="float-end">
+                                <a href="/auth/corp/banlist/categories/" class="btn btn-danger btn-sm">Lista de Categorias</a>
+                                <a href="/auth/corp/ban/add/" class="btn btn-sm btn-danger"><i class="bi bi-plus-circle"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-12 col-md-2">
+                                <div class="text-start">
+                                    <label class="d-flex align-items-center gap-2">
+                                        Categoria:
+                                        <select id="banlist_category" class="form-select form-select-sm" aria-controls="banlist">
+                                            <option value="">Todas</option>
+                                            {% for category in categories %}
+                                                <option value="{{category.name}}">{{category.name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="table table-dark table-hover no-footer" id="banlist">
+                            <thead>
+                                <tr>
+                                    <th class="col">Character</th>
+                                    <th class="col">Motivo</th>
+                                    <th class="col">Categoria</th>
+                                    <th class="col">Autor</th>
+                                    <th class="col">Fecha</th>
+                                    <th class="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ban in banlist %}
+                                <tr>
+                                    <td>{{ban.character_name}}</td>
+                                    <td>{{ban.reason}}</td>
+                                    <td>{{ban.ban_category.name}}</td>
+                                    <td>{{ban.banned_by.username}}</td>
+                                    <td>{{ban.ban_date}}</td>
+                                    <td><a href="/auth/corp/ban/del/{{ban.id}}" class="btn btn-sm btn-danger">Unban</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="{% static 'js/banlist.js' %}"></script>
+{% endblock %}

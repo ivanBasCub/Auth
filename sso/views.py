@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.conf import settings
 import random
 import string
@@ -11,6 +11,7 @@ import requests
 from datetime import timedelta
 from django.utils import timezone
 import esi.views as esi_views
+import ban.models as ban_models
 
 # Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
@@ -57,6 +58,10 @@ def eve_callback(request):
 
 # Funciones para comprobar las cuentas
 def check_account(request, tokens, user_info):
+    # Comprobar si el personaje esta baneado
+    if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
+        return ban_notice(request)
+    
     if request.user.is_authenticated:
         return register_eve_character(request, tokens, user_info)
     else:
@@ -134,6 +139,11 @@ def refresh_eve_character(user_info, tokens, expiration):
     character = esi_views.character_skill_points(character)
         
     character.save()
+
+# Funcion de aviso de ban
+def ban_notice(request):
+    return render(request, "index.html", {"mostrar_modal": True})
+
 
 # Funcion para refrescar el token de los pj de Eve
 def refresh_token(character):

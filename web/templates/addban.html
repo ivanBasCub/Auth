@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+
+{% block style %}
+<title>Add Ban - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <form method="post" class="col-md-6">
+            {% csrf_token %}
+            <div class="card card-default mb-3 bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Add Ban</div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label for="character_id">Personaje</label>
+                        <select class="form-control" name="character_id" id="character_id" required>
+                            {% for char in list_pjs %}
+                            <option value="{{char.characterId}}">{{char.characterName}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="reason">Motivo</label>
+                        <textarea class="form-control" name="reason" id="reason" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="ban_category">Categoría</label>
+                        <select class="form-control" name="ban_category" id="ban_category" required>
+                            {% for category in categories %}
+                            <option value="{{category.id}}">{{category.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">Banear</button>
+                    </div>
+                </div> 
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
