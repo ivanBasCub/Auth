@@ -6,10 +6,17 @@ import sso.views as sso_views
 from doctrines.models import Doctrine, FitShip, Categories
 from django.db.models import Q
 from ban.models import BannedCharacter, BanCategory
+from fats.models import Fats, FleetType
+from fats.views import create_fats
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your views here.
 def index(request):
-    return render(request, "index.html")
+    if request.user.is_authenticated:
+        return redirect("/auth/dashboard/")
+    else:
+        return render(request, "index.html")
 
 # Vista principal del usuario
 @login_required(login_url='/')
@@ -414,3 +421,47 @@ def del_ban_category(request, category_id):
         pass
 
     return redirect("/auth/corp/banlist/categories/")
+
+# Vista de Fats
+@login_required(login_url="/")
+def fat_list(request):
+    limit_30_days = timezone.now() - timedelta(days=30)
+
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main=True).first()
+    fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
+    
+
+    return render(request, "fatlist.html",{
+        "main_pj" : main_pj,
+        "list_pj" : list_pj,
+        "fats" : fats
+    })
+
+@login_required(login_url="/")
+def add_fat(request):
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main=True).first()
+    doctrines = Doctrine.objects.all()
+    fleet_types = FleetType.objects.all()
+
+    if request.method == "POST":
+        pj_id = int(request.POST.get("fc",0).strip())
+        doctrine_id = int(request.POST.get("doctrine",0).strip())
+        fleet_type_id = int(request.POST.get("type",0).strip())
+        fleet_name = request.POST.get("name","").strip()
+
+        if pj_id != 0 and doctrine_id != 0 and fleet_type_id != 0 and fleet_name != "":
+            try:
+                create_fats(pj_id, doctrine_id, fleet_type_id, fleet_name)
+            except Exception as e:
+                print("Error creating fats:", e)
+
+        return redirect("/auth/fats/list/")
+    else:
+        return render(request, "addFat.html",{
+            "main_pj" : main_pj,
+            "list_pj" : list_pj,
+            "fleet_types" : fleet_types,
+            "doctrines" : doctrines
+        })

@@ -151,3 +151,18 @@ def item_name(item_ID):
     data = response.json()
 
     return data["name"]
+
+def solar_system_name(solar_system_ID):
+
+    headers_2 = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2020-01-01",
+        "X-Tenant": "",
+        "Accept": "application/json"
+    }
+
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/systems/{solar_system_ID}", headers = headers_2)
+    data = response.json()
+
+    return data["name"]

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block style %}
+<title>Segumiento de la Actividad de Flota - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default mb-3 bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Segumiento de la Actividad de Flota</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="text-start mb-3 col-md-3">
+                            Personaje
+                            <select id="pj_filter" class="form-select form-select-sm" aria-controls="FatsTable">
+                                <option value=""></option>
+                                {% for pj in list_pj %}
+                                <option value="{{pj.characterName}}">{{pj.characterName}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="text-center mb-3 col-md-6">
+                            <h5>Main: {{ main_pj.characterName }}</h5>
+                        </div>
+                        <div class="text-end mb-3 col-md-3">
+                            <span class="badge bg-secondary" id="FatsPJ"></span>
+                            <span class="badge bg-secondary">Total de flotas en los ultimos 30 días: {{ fats|length }}</span>
+                           
+                        </div>
+                    </div>
+
+                    <table class="table table-dark table-hover dataTable no-footer" id="FatsTable">
+                        <thead>
+                            <tr>
+                                <th class="col">Nombre de la Flota</th>
+                                <th class="col">Tipo de Flota</th>
+                                <th class="col">Doctrina</th>
+                                <th class="col">Nave</th>
+                                <th class="col">Localizacion</th>
+                                <th class="col">Personaje</th>
+                                <th class="col">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fat in fats %}
+                            <tr>
+                                <td>{{ fat.name }}</td>
+                                <td>{{ fat.fleetType.name }}</td>
+                                <td>{{ fat.doctrine.doctitle }}</td>
+                                <td>{{ fat.ship }}</td>
+                                <td>{{ fat.solarSystem }}</td>
+                                <td>{{ fat.character.characterName }}</td>
+                                <td>{{ fat.date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="{% static 'js/fatstable.js' %}"></script>
+{% endblock %}

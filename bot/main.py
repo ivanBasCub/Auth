@@ -1,12 +1,15 @@
+import asyncio
 import discord
 from discord.ext import commands
 from django.conf import settings
+from .views import FacilitiesView
 
 TOKEN = settings.DISCORD_TOKEN
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
+kill_loops = {}
 
 def start_bot():
     bot.run(TOKEN)
@@ -45,4 +48,23 @@ async def dm(ctx, *, msg):
     await ctx.reply("Hola")
 
 
+@bot.command()
+async def facilities_info(ctx):
 
+    user_id = ctx.author.id
+    kill_loops[user_id] = True
+    embed = discord.Embed(
+        title="Ver estado de las Estaciones",
+        color=discord.Color.blue()
+    )
+
+    await ctx.send(embed=embed, view= FacilitiesView())
+
+@bot.command()
+async def stopreport(ctx):
+    user_id = ctx.author.id
+    if user_id in kill_loops:
+        kill_loops[user_id] = False
+        await ctx.send("Kill report stopped.")
+    else:
+        await ctx.send("No active kill report to stop.")

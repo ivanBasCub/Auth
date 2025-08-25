@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block style %}
+<title>Crear Fat - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-6">
+            <div class="card card-default mb-3 bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Crear Fat</div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="fc" class="form-label">Personaje FC</label>
+                            <select class="form-select" id="fc" name="fc" required>
+                                <option value="" disabled selected>Selecciona un personaje</option>
+                                {% for pj in list_pj %}
+                                <option value="{{ pj.characterId }}">{{ pj.characterName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="name" class="form-label">Nombre de la Flota</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="doctrine" class="form-label">Doctrina</label>
+                            <select class="form-select" id="doctrine" name="doctrine" required>
+                                <option value="" disabled selected>Selecciona una doctrina</option>
+                                {% for doctrine in doctrines %}
+                                <option value="{{ doctrine.id }}">{{ doctrine.doctitle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="type" class="form-label">Descripción</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="" disabled selected>Tipo de Flota</option>
+                                {% for ft in fleet_types %}
+                                <option value="{{ ft.id }}">{{ ft.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">Crear Fat</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -46,4 +46,7 @@ urlpatterns = [
     path('auth/corp/banlist/categories/', web_views.ban_categories, name="ban_categories"),
     path('auth/corp/ban/category/add/', web_views.add_ban_category, name="add_ban_category"),
     path('auth/corp/ban/category/del/<int:category_id>/', web_views.del_ban_category, name="del_ban_category"),
+    # Zona de Fats
+    path('auth/fats/list/', web_views.fat_list, name="fat_list"),
+    path('auth/fats/add/', web_views.add_fat, name="add_fat"),
 ]

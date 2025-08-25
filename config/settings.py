@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'sso',
     'doctrines',
     'ban',
+    'fats',
 ]
 
 MIDDLEWARE = [
