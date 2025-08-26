@@ -12,6 +12,7 @@ from datetime import timedelta
 from django.utils import timezone
 import esi.views as esi_views
 import ban.models as ban_models
+import secrets
 
 # Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
@@ -84,10 +85,14 @@ def register_eve_character(request, tokens, user_info):
 # Caso de que no haya una cuenta logeada
 def update_create_user(request, tokens, user_info):
     expiration = timezone.now() + timedelta(minutes=20)
+    characters = string.ascii_letters + string.digits + string.punctuation
+    random_password = ''.join(secrets.choice(characters) for i in range(16))
 
     try:
         # Caso de que el usuario y el pj existan en la BBDD
         user = User.objects.get(username = user_info["CharacterName"].replace(" ","_"))
+        user.set_password(random_password)
+        user.save()
         refresh_eve_character(user_info, tokens, expiration)
 
         login(request,user)
@@ -99,6 +104,7 @@ def update_create_user(request, tokens, user_info):
             return redirect("../../")
         
         user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
+        user.set_password(random_password)
         user.save()
 
         save_eve_character(user, user_info, tokens, expiration)
@@ -119,7 +125,7 @@ def save_eve_character(user, user_info, tokens, expiration):
             main = False,
             user_character = user
         )
-    if user.username == user_info["CharacterName"]:
+    if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
 
     character = esi_views.character_corp_alliance_info(character)
