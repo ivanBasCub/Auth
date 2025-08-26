@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<title>Members List - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default mb-3 bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Members List</div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-hover dataTable no-footer" id="MembersTable">
+                        <thead>
+                            <tr>
+                                <th class="col">Character Name</th>
+                                <th class="col">Corporation</th>
+                                <th class="col">Alliance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>{{ member.characterName }}</td>
+                                <td>{{ member.corpName }}</td>
+                                <td>{{ member.allianceName }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

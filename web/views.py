@@ -10,6 +10,7 @@ from fats.models import Fats, FleetType
 from fats.views import create_fats
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Prefetch
 
 # Create your views here.
 def index(request):
@@ -38,7 +39,6 @@ def audit_account(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
 
     main_pj = list_pjs.filter(main=True).first()
-    list_alts = list_pjs.filter(main=False).all()
 
     return render(request, "audit.html",{
         "main_pj" : main_pj,
@@ -50,10 +50,12 @@ def audit_account(request):
 def fittings(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     doctrines = Doctrine.objects.exclude(doctitle = "undoctrine").all()
+    doc_categories = Categories.objects.filter(type = 1).all()
 
     return render(request, "fittings.html", {
         "main_pj" : main_pj,
-        "list_doctrines" : doctrines
+        "list_doctrines" : doctrines,
+        "categories" : doc_categories
     })
 
 # Vista de una doctrina
@@ -465,3 +467,16 @@ def add_fat(request):
             "fleet_types" : fleet_types,
             "doctrines" : doctrines
         })
+    
+# Vista de Lista de miembros
+@login_required(login_url="/")
+def member_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    alts = EveCharater.objects.filter(main=False).all()
+    members = EveCharater.objects.filter(main = True).all()
+
+    return render(request, "corpMembersList.html",{
+        "main_pj" : main_pj,
+        "members" : members,
+        "alts" : alts
+    })
