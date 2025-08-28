@@ -104,6 +104,7 @@ def update_create_user(request, tokens, user_info):
             return redirect("../../")
         
         member_group = Group.objects.get_or_create(name = "Miembro")
+        member_group = Group.objects.get(name = "Miembro")
         user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
         user.set_password(random_password)
         user.groups.add(member_group)
