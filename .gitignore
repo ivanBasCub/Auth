@@ -4,3 +4,4 @@ notes.md
 docker-compose.yml
 DockerFile
 **/__pycache__/
+*.pyc
