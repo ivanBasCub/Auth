@@ -4,13 +4,12 @@ from sso.models import EveCharater
 import esi.views as esi_views
 import sso.views as sso_views
 from doctrines.models import Doctrine, FitShip, Categories
-from django.db.models import Q
 from ban.models import BannedCharacter, BanCategory
 from fats.models import Fats, FleetType
 from fats.views import create_fats
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Prefetch
+from django.contrib.auth.models import User
 
 # Create your views here.
 def index(request):
@@ -472,11 +471,15 @@ def add_fat(request):
 @login_required(login_url="/")
 def member_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    alts = EveCharater.objects.filter(main=False).all()
-    members = EveCharater.objects.filter(main = True).all()
+    members = EveCharater.objects.filter(main= True).all()
+    
+    for member in members:
+        user = User.objects.get(username = member.characterName.replace(' ','_'))
+        member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
+        member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
+
 
     return render(request, "corpMembersList.html",{
         "main_pj" : main_pj,
-        "members" : members,
-        "alts" : alts
+        "members" : members
     })

@@ -14,7 +14,6 @@
                         <div class="card-title mb-0">
                             Lista de doctrinas
                             <div class="float-end">
-
                                 <a class="btn btn-danger" href="/auth/fittings/admin/doctrine/add/">
                                     <i class="bi bi-plus-circle"></i>
                                 </a>
@@ -37,13 +36,19 @@
                                 <tr>
                                     <td>{{doctrine.doctitle}}</td>
                                     <td>{{doctrine.desc}}</td>
-                                    <td></td>
+                                    <td>
+                                        {% if doctrine.docCategory.all %}
+                                            {{doctrine.docCategory.all|join:" "}}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <div class="btn-group" role="group" aria-label="Opciones">
-                                            <a class="btn btn-danger" href="/auth/fittings/admin/doctrine/mod/{{doctrine.id}}/">
+                                            <a class="btn btn-danger"
+                                                href="/auth/fittings/admin/doctrine/mod/{{doctrine.id}}/">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
-                                            <a class="btn btn-danger" href="/auth/fittings/admin/doctrine/del/{{doctrine.id}}/">
+                                            <a class="btn btn-danger"
+                                                href="/auth/fittings/admin/doctrine/del/{{doctrine.id}}/">
                                                 <i class="bi bi-trash3-fill"></i>
                                             </a>
                                         </div>
@@ -87,10 +92,12 @@
                                     {% endif %}
                                     <td>
                                         <div class="btn-group" role="group" aria-label="Opciones">
-                                            <a class="btn btn-danger" href="/auth/fittings/admin/category/mod/{{category.id}}">
+                                            <a class="btn btn-danger"
+                                                href="/auth/fittings/admin/category/mod/{{category.id}}">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
-                                            <a class="btn btn-danger" href="/auth/fittings/admin/category/del/{{category.id}}">
+                                            <a class="btn btn-danger"
+                                                href="/auth/fittings/admin/category/del/{{category.id}}">
                                                 <i class="bi bi-trash3-fill"></i>
                                             </a>
                                         </div>

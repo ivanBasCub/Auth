@@ -13,20 +13,54 @@
                     <div class="card-title mb-0">Members List</div>
                 </div>
                 <div class="card-body">
-                    <table class="table table-dark table-hover dataTable no-footer" id="MembersTable">
+                    <table class="table table-dark table-hover dataTable no-footer text-center align-middle" id="MembersTable">
                         <thead>
                             <tr>
-                                <th class="col">Character Name</th>
-                                <th class="col">Corporation</th>
-                                <th class="col">Alliance</th>
+                                <th class="col">Personaje Main</th>
+                                <th class="col">BlackListed</th>
+                                <th class="col">Alts</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for member in members %}
                             <tr>
                                 <td>{{ member.characterName }}</td>
-                                <td>{{ member.corpName }}</td>
-                                <td>{{ member.allianceName }}</td>
+                                <td>
+                                    {% if member.ban %}
+                                    <button class="btn btn-sm btn-danger">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if member.alts_list %}
+                                    <table class="table table-dark table-hover dataTable no-footer">
+                                        <thead>
+                                            <tr>
+                                                <th class="col">Personaje</th>
+                                                <th class="col">Corp</th>
+                                                <th class="col">Alianza</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for alt in member.alts_list %}
+                                            <tr>
+                                                <td><a href="https://zkillboard.com/character/{{alt.characterId}}/" target="_blank">{{ alt.characterName }}</a></td>
+                                                <td><a href="https://zkillboard.com/corporation/{{alt.corpId}}/" target="_blank">{{ alt.corpName }}</a></td>
+                                                <td><a href="https://zkillboard.com/alliance/{{alt.allianceId}}/" target="_blank">{{ alt.allianceName }}</a></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    {% else %}
+                                    <em>No tiene alts</em>
+                                    {% endif %}
+                                </td>
+                                
                             </tr>
                             {% endfor %}
                         </tbody>

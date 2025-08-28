@@ -4,7 +4,7 @@ import random
 import string
 import urllib.parse
 from django.contrib.auth import login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from .models import EveCharater
 from base64 import b64encode
 import requests
@@ -103,8 +103,10 @@ def update_create_user(request, tokens, user_info):
         if check.exists():
             return redirect("../../")
         
+        member_group = Group.objects.get_or_create(name = "Miembro")
         user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
         user.set_password(random_password)
+        user.groups.add(member_group)
         user.save()
 
         save_eve_character(user, user_info, tokens, expiration)
@@ -189,3 +191,13 @@ def refresh_token(character):
 def eve_logout(request):
     logout(request)
     return redirect("/")
+
+def inactive_user():
+    limit_time = timezone.now - timedelta(days=30)
+    inactive_group = Group.objects.get_or_create(name="Reserva Imperial")
+    list_members = User.objects.filter(last_login__lt=limit_time)
+
+    for member in list_members:
+        member.groups.clear()
+        member.groups.add(inactive_group)
+        member.save()

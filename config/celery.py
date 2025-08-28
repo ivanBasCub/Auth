@@ -26,6 +26,11 @@ app.conf.beat_schedule = {
         'task' : 'sso.tasks.tokens',
         'schedule': 900,
         'args' : ()
+    },
+    'inactive_users':{
+        'task' : 'sso.tasks.inactive',
+        'schedule' : 3600,
+        'args' : ()
     }
 }
 
