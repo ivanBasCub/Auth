@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>Manejo de Grupos - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Solicitudes de grupos</div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-hover dataTable no-footer">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Grupo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if list_notifications %}
+                            {% for notification in list_notifications %}
+                            <tr>
+                                {% for user in notification.user.all %}
+                                <td>{{user.username}}</td>
+                                {% endfor %}
+                                {% for group in notification.group.all %}
+                                <td>{{group.name}}</td>
+                                {% endfor %}
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="noti_id" value="{{notification.id}}">
+                                            <input type="hidden" name="action" value="1">
+                                            <button class="btn btn-sm btn-success">Aceptar</button>
+                                        </form>
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="noti_id" value="{{notification.id}}">
+                                            <input type="hidden" name="action" value="0">
+                                            <button class="btn btn-sm btn-danger">Denegar</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center">No hay solicitudes de ingreso</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

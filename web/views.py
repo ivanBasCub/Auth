@@ -1,15 +1,15 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
-import esi.views as esi_views
-import sso.views as sso_views
 from doctrines.models import Doctrine, FitShip, Categories
 from ban.models import BannedCharacter, BanCategory
 from fats.models import Fats, FleetType
 from fats.views import create_fats
 from django.utils import timezone
 from datetime import timedelta
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+import groups.views as groups_views
+from groups.models import GroupNotifications
 
 # Create your views here.
 def index(request):
@@ -482,4 +482,62 @@ def member_list(request):
     return render(request, "corpMembersList.html",{
         "main_pj" : main_pj,
         "members" : members
+    })
+
+# Vista de los grupos
+
+#Vista de los grupos disponibles
+@login_required(login_url="/")
+def group_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    groups = Group.objects.exclude(name= "Miembro").all()
+    notification_list = GroupNotifications.objects.filter(user = request.user).all()
+
+    if request.method == "POST":
+        group_id = int(request.POST.get("group_id",0).strip())
+        user_id = int(request.POST.get("user_id",0).strip())
+        status = int(request.POST.get("status",0).strip())
+        if status == 0:
+            groups_views.create_notification(group_id, user_id, status)
+        else:
+            remove_group = Group.objects.get(id = group_id)
+            user = User.objects.get(id = user_id)
+            user.groups.remove(remove_group)
+            user.save()
+            
+
+    for group in groups:
+        notification = GroupNotifications.objects.filter(group = group)
+        if notification.exists():
+            group.notification = True
+
+    return render(request, "listGroups.html", {
+        "main_pj": main_pj,
+        "groups" : groups,
+        "notification_list": notification_list
+    })
+
+# Vista para resolver las solicitudes de grupo
+@login_required(login_url="/")
+def group_nofitication_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_notifications = GroupNotifications.objects.all()
+
+    if request.method == "POST":
+        noti_id = int(request.POST.get("noti_id",0).strip())
+        action = int(request.POST.get("action",0).strip())
+
+        notification = GroupNotifications.objects.get(id=noti_id)
+
+        if action == 1:
+            user = notification.user.first()
+            group = notification.group.first()
+            user.groups.add(group)
+            user.save()
+
+        notification.delete()
+
+    return render(request, "listGroupsNotifications.html",{
+        "main_pj": main_pj,
+        "list_notifications" : list_notifications
     })

@@ -44,6 +44,18 @@
                             {% endif %}
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Grupos
+                        </a>    
+                        <ul class="dropdown-menu">
+                            <li><a href="/auth/groups/" class="dropdown-item">Lista de Grupos</a></li>
+                            {% if user|has_group:"Director" %}
+                                <li><a href="/auth/group/management/requests/" class="dropdown-item">Gestionar Grupos</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
                     {% if user|has_group:"Director" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">

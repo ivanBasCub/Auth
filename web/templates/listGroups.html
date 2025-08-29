@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>Grupos disponibles - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Lista de grupos
+                        {% if user|has_group:"Director" %}
+                            <div class="float-end">
+                                <a href="#" class="btn btn-sm btn-danger"><i
+                                        class="bi bi-pencil-fill"></i></a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-hover dataTable no-footer">
+                        <thead>
+                            <tr>
+                                <th class="col">Nombre</th>
+                                <th class="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in groups %}
+                            <tr>
+                                <td>{{group.name}}</td>
+                                <td class="text-end">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="group_id" value="{{group.id}}">
+                                        <input type="hidden" name="user_id" value="{{request.user.id}}">
+                                        {% if user|has_group:group.name %}
+                                            <input type="hidden" name="status" value="1">
+                                            <button class="btn btn-danger">Dejar</button>
+                                        {% else %}
+                                            <input type="hidden" name="status" value="0">
+                                            <button class="btn btn-success" {% if group.notification %} disabled {% endif %}>Solicitar</button>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

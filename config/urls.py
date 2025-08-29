@@ -51,4 +51,7 @@ urlpatterns = [
     path('auth/fats/add/', web_views.add_fat, name="add_fat"),
     # Corp members
     path('auth/corp/memberlist/', web_views.member_list, name="memberlist"),
+    # Groups
+    path('auth/groups/', web_views.group_list, name="group-list"),
+    path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications")
 ]
