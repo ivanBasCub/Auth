@@ -12,6 +12,10 @@
                     src="https://images.evetech.net/characters/{{main_pj.characterId}}/portrait?size=64" class="m-0"
                     style="border-radius: 0.375rem 0px 0px 0.375rem;">
                 <h4 class="m-1 mx-3">{{main_pj.characterName}}</h4>
+                <div class="col-md-10 text-center">
+                    <span class="badge bg-secondary">Total ISK: {{isk}} ISK</span>
+                    <span class="badge bg-secondary">Skill Points: {{skill_points}}</span>
+                </div>
                 <div role="group" class="me-3 ms-auto btn-group">
                     <a type="button" class="btn-danger btn btn-primary" href="/sso/login/">
                         <i class="bi bi-plus-circle"></i>
@@ -55,7 +59,7 @@
                                     <br>
                                     Isk:
                                     <span class="text-center badge bg-danger">
-                                        ${{pj.walletMoney}}
+                                        {{pj.walletMoney}} ISK
                                     </span>
                                 </p>
                                 <p class="text-center card-text">

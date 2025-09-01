@@ -54,15 +54,29 @@ def eve_callback(request):
 
     res = requests.get(url, headers=header)
     user_info = res.json()
-    
     return check_account(request, tokens, user_info)
 
 # Funciones para comprobar las cuentas
 def check_account(request, tokens, user_info):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-08-26",
+        "X-Tenant": "",
+        "Accept": "application/json"
+    }
+
+    res = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{user_info['CharacterID']}")
+    public_data = res.json()
+    print(public_data)
+    corp_list = [98634987, 98628176]
     # Comprobar si el personaje esta baneado
     if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
         return ban_notice(request)
-    
+    if public_data["corporation_id"] not in corp_list and not request.user.is_authenticated:
+        print(public_data["corporation_id"] in corp_list)
+        return ban_notice(request)
+
     if request.user.is_authenticated:
         return register_eve_character(request, tokens, user_info)
     else:
@@ -128,12 +142,19 @@ def save_eve_character(user, user_info, tokens, expiration):
             main = False,
             user_character = user
         )
-    if user.username == user_info["CharacterName"].replace(" ","_"):
-        character.main = True
-
+    
     character = esi_views.character_corp_alliance_info(character)
     character = esi_views.character_wallet_money(character)
     character = esi_views.character_skill_points(character)
+
+    if user.username == user_info["CharacterName"].replace(" ","_"):
+        character.main = True
+        if character.corpId == 98628176:
+            group_null = Group.objects.get(name = "Null-Sec")
+            user.groups.add(group_null)
+        elif character.corpId == 98634987:
+            group_high = Group.objects.get(name = "High-Sec")
+            user.groups.add(group_high)
 
     character.save()
 
@@ -194,7 +215,7 @@ def eve_logout(request):
     return redirect("/")
 
 def inactive_user():
-    limit_time = timezone.now - timedelta(days=30)
+    limit_time = timezone.now() - timedelta(days=30)
     inactive_group = Group.objects.get_or_create(name="Reserva Imperial")
     list_members = User.objects.filter(last_login__lt=limit_time)
 

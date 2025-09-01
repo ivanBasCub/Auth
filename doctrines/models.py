@@ -25,6 +25,7 @@ class FitShip(models.Model):
     nameFit = models.CharField(max_length=200)
     desc = models.TextField(default="")
     items = models.JSONField(default=dict)
+    min_skills = models.JSONField(default=dict)
     fitCategory = models.ManyToManyField('Categories', related_name="fitCategory")
     fitDoctrine = models.ManyToManyField('Doctrine', related_name="fitDoctrine")
 

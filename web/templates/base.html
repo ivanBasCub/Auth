@@ -24,7 +24,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if user|has_group:"Miembro" %}
+                    {% if user|has_group:"Miembro" and user|has_group:"Null-sec" %}
                     <li class="nav-item">
                         <a class="nav-link" aria-current="page" href="/auth/audit/">Personajes</a>
                     </li>

@@ -55,6 +55,81 @@
                         </dl>
                     </div>
                 </div>
+                <div class="card card-primary mb-3 bg-dark text-light">
+                    <div class="card-header">
+                        <div class="card-title mb-0">Check de skills base</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger" style="-webkit-animation: progress-bar-stripes 2s linear infinite;
+                                    animation: progress-bar-stripes 2s linear infinite;
+                                    animation-direction: alternate;
+                                    background-image: linear-gradient(
+                                        45deg,
+                                        rgba(255, 50, 50, 0.15) 25%,
+                                        transparent 25%,
+                                        transparent 50%,
+                                        rgba(255, 50, 50, 0.15) 50%,
+                                        rgba(255, 50, 50, 0.15) 75%,
+                                        transparent 75%,
+                                        transparent 50%
+                                    );
+                                    background-size: 40px 40px">
+                            <p class="text-center m-0">
+                                Estas son las skills necesarias para <b>usar la nave</b> y <b>los modulos</b>.
+                                <br>
+                                En flotas sera <b>necesario</b> subir más las skills para aprovechar al máximo el fiteo
+                            </p>
+                        </div>
+                        {% for pj in list_pj %}
+                        <p>
+                            {{pj.characterName}}
+                            <span class="float-end">
+                                {% if pj.check_ship %}
+                                <button class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                                {% endif %}
+                            </span>
+                        </p>
+                        {% endfor %}
+                    </div>
+                </div> 
+                <div class="card card-primary mb-3 bg-dark text-light">
+                    <div class="card-header">
+                        <div class="card-title mb-0">Skills base requeridas</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger" style="-webkit-animation: progress-bar-stripes 2s linear infinite;
+                                    animation: progress-bar-stripes 2s linear infinite;
+                                    animation-direction: alternate;
+                                    background-image: linear-gradient(
+                                        45deg,
+                                        rgba(255, 50, 50, 0.15) 25%,
+                                        transparent 25%,
+                                        transparent 50%,
+                                        rgba(255, 50, 50, 0.15) 50%,
+                                        rgba(255, 50, 50, 0.15) 75%,
+                                        transparent 75%,
+                                        transparent 50%
+                                    );
+                                    background-size: 40px 40px">
+                            <p class="text-center m-0">
+                                Estas son las skills necesarias para <b>usar la nave</b> y <b>los modulos</b>.
+                                <br>
+                                En flotas sera <b>necesario</b> subir más las skills para aprovechar al máximo el fiteo
+                            </p>
+                        </div>
+                        {% for skill, level in fit_skills.items %}
+                            <p>
+                                {{skill}}<span class="float-end">{{level}}</span>
+                            </p>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             <div class="col-md-9">
                 <div class="card card-default mb-3 bg-dark text-light">

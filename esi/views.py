@@ -86,6 +86,13 @@ def character_skill_points(character):
     data = response.json()
     character.totalSkillPoints = data["total_sp"]
 
+    list_skills = {}
+
+    for skill in data["skills"]:
+        name = item_name(skill["skill_id"])
+        list_skills[name] = skill["trained_skill_level"]
+
+    character.skills = list_skills
     return character
 
 
@@ -113,15 +120,23 @@ def fit_list():
 
     for fit_data in data:
         check = FitShip.objects.filter(fitId = fit_data["fitting_id"])
-
+        all_skills = {}
         item_list = fit_data["items"]
+        set_items_id = {fit_data["ship_type_id"]}
 
         for item in item_list:
             item["itemName"] = item_name(item["type_id"])
+            set_items_id.add(item["type_id"])
+
+        for item_id in set_items_id:
+            skills = get_required_skills(item_id)
+            for name, level in skills.items():
+                all_skills[name] = max(all_skills.get(name, 0), level)
 
         if check.exists():
             fit = FitShip.objects.get(fitId = fit_data["fitting_id"])
             fit.items = item_list
+            fit.min_skills = all_skills
             fit.save()
         else:
             fit = FitShip.objects.create(
@@ -131,14 +146,14 @@ def fit_list():
                 nameFit = fit_data["name"],
                 desc = fit_data["description"],
                 items = item_list,
+                min_skills = all_skills
             )
 
             fit.save()
 
     return 0
 
-def item_name(item_ID):
-
+def item_data(item_id):
     headers_2 = {
         "Accept-Language": "",
         "If-None-Match": "",
@@ -147,8 +162,61 @@ def item_name(item_ID):
         "Accept": "application/json"
     }
 
-    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_ID}", headers = headers_2)
-    data = response.json()
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_id}", headers = headers_2)
+    return response.json()
+
+def get_required_skills(type_id, visited=None):
+    SKILL_ATTRS = [
+        (182, 277),   # Skill 1
+        (183, 278),   # Skill 2
+        (184, 279),   # Skill 3
+        (1285, 1286), # Skill 4
+        (1289, 1287), # Skill 5
+        (1290, 1288), # Skill 6
+    ]
+
+    """
+    Devuelve un diccionario {skill_name: nivel} con todas las skills mínimas
+    necesarias para un type_id, incluyendo prerequisitos recursivos.
+    """
+    if visited is None:
+        visited = set()
+
+    if type_id in visited:
+        return {}
+    visited.add(type_id)
+
+    data = item_data(type_id)
+    attrs = {a['attribute_id']: a['value'] for a in data.get('dogma_attributes', [])}
+
+    skills = {}
+
+    for skill_attr, level_attr in SKILL_ATTRS:
+        if skill_attr in attrs:
+            skill_id = int(attrs[skill_attr])
+            level = int(attrs.get(level_attr, 0))
+
+            skill_data = item_data(skill_id)
+            skill_name = skill_data['name']
+
+            # Guardar el nivel más alto si ya existe
+            if skill_name in skills:
+                skills[skill_name] = max(skills[skill_name], level)
+            else:
+                skills[skill_name] = level
+
+            # Recursivamente obtener prerequisitos de esa skill
+            sub_skills = get_required_skills(skill_id, visited)
+            for sub_name, sub_level in sub_skills.items():
+                if sub_name in skills:
+                    skills[sub_name] = max(skills[sub_name], sub_level)
+                else:
+                    skills[sub_name] = sub_level
+
+    return skills
+                
+def item_name(item_ID):
+    data = item_data(item_ID)
 
     return data["name"]
 

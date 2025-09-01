@@ -13,6 +13,7 @@ class EveCharater(models.Model):
     allianceName = models.CharField(max_length=150,default="")
     walletMoney = models.BigIntegerField(default=0)
     totalSkillPoints = models.BigIntegerField(default=0)
+    skills = models.JSONField(default=dict)
     main = models.BooleanField(default=False)
     user_character = models.ForeignKey(User,on_delete=models.DO_NOTHING, related_name="evepj")
 

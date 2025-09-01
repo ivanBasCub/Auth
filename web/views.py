@@ -38,11 +38,41 @@ def audit_account(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
 
     main_pj = list_pjs.filter(main=True).first()
+    isk_total = 0
+    skill_points_total = 0
+
+    for pj in list_pjs:
+        isk_total+= pj.walletMoney
+        skill_points_total += pj.totalSkillPoints
+        pj.walletMoney = formatear_numero(pj.walletMoney)
+        pj.totalSkillPoints = formatear_numero(pj.totalSkillPoints)
+
+    isk_total = formatear_numero(isk_total)
+    skill_points_total = formatear_numero(skill_points_total)
 
     return render(request, "audit.html",{
         "main_pj" : main_pj,
-        "list_pjs" : list_pjs
+        "list_pjs" : list_pjs,
+        "isk" : isk_total,
+        "skill_points" : skill_points_total
     })
+
+# Funcion para formatear numeros
+def formatear_numero(n):
+    # Lista de sufijos y divisores
+    sufijos = [
+        (1_000_000_000_000, "T"),  # Trillones
+        (1_000_000_000, "B"),      # Billions (miles de millones)
+        (1_000_000, "M"),          # Millones
+        (1_000, "K")               # Miles
+    ]
+    
+    for divisor, sufijo in sufijos:
+        if abs(n) >= divisor:
+            return f"{n / divisor:.2f} {sufijo}"
+    
+    # Si es menor de mil, se devuelve tal cual
+    return str(n)
 
 # Zona de Fiteos
 @login_required(login_url='/')
@@ -87,8 +117,19 @@ def fit(request, fit_id):
 
         return text
 
+    def check_skill(pj_skill, fit_skill):
+        for skill, nivel in fit_skill.items():
+            if skill not in pj_skill or pj_skill[skill] < nivel:
+                return False
+        return True
+
     fit_data = FitShip.objects.get(id = fit_id)
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main=True).first()
+
+    for pj in list_pj:
+        pj.check_ship = check_skill(pj.skills, fit_data.min_skills)
+        print(pj.check_ship)
 
     item_list = fit_data.items
 
@@ -119,6 +160,7 @@ def fit(request, fit_id):
 
     return render(request, "fit.html",{
         "main_pj" : main_pj,
+        "list_pj" : list_pj,
         "fit" : fit_data,
         "hi_items" : hi_items,
         "med_items" : med_items,
@@ -132,7 +174,8 @@ def fit(request, fit_id):
         "med_slots" : med_slots,
         "lo_slots" : lo_slots,
         "rig_slots" : rig_slots,
-        "etf" : etf_str
+        "etf" : etf_str,
+        "fit_skills" : fit_data.min_skills
     })
 
 # Zona de administración de doctrinas
@@ -490,7 +533,7 @@ def member_list(request):
 @login_required(login_url="/")
 def group_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    groups = Group.objects.exclude(name= "Miembro").all()
+    groups = Group.objects.exclude(name__in= ["Miembro","High-Sec"]).all()
     notification_list = GroupNotifications.objects.filter(user = request.user).all()
 
     if request.method == "POST":
