@@ -129,7 +129,6 @@ def fit(request, fit_id):
 
     for pj in list_pj:
         pj.check_ship = check_skill(pj.skills, fit_data.min_skills)
-        print(pj.check_ship)
 
     item_list = fit_data.items
 
@@ -204,8 +203,6 @@ def add_doctrine(request):
         doctrine_desc = request.POST.get("doctrineDesc","").strip()
         doctrine_category = int(request.POST.get("categoty",0))
 
-        print(doctrine_name, doctrine_desc, doctrine_category, doctrine_fits)
-
         if doctrine_name != "":
             new_doctrine = Doctrine.objects.create(doctitle = doctrine_name, desc = doctrine_desc)
 
@@ -245,7 +242,6 @@ def mod_doctrine(request, doctrine_id):
         doctrine_desc = request.POST.get("doctrineDesc","").strip()
         doctrine_category = int(request.POST.get("categoty",0))
 
-        print(doctrine_category, "/ ", request.POST.get("categoty"))
         if doctrine_name != "":
             doctrine.doctitle = doctrine_name
             doctrine.desc = doctrine_desc
