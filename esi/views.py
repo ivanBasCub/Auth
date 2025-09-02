@@ -87,12 +87,13 @@ def character_skill_points(character):
     character.totalSkillPoints = data["total_sp"]
 
     list_skills = {}
-
-    for skill in data["skills"]:
-        name = item_name(skill["skill_id"])
-        list_skills[name] = skill["trained_skill_level"]
-
-    character.skills = list_skills
+    
+    if character.skills == {}:
+        for skill in data["skills"]:
+            name = item_name(skill["skill_id"])
+            list_skills[name] = skill["trained_skill_level"]
+        character.skills = list_skills
+    
     return character
 
 

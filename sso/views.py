@@ -68,13 +68,13 @@ def check_account(request, tokens, user_info):
 
     res = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{user_info['CharacterID']}")
     public_data = res.json()
-    print(public_data)
+    
     corp_list = [98634987, 98628176]
     # Comprobar si el personaje esta baneado
     if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
         return ban_notice(request)
     if public_data["corporation_id"] not in corp_list and not request.user.is_authenticated:
-        print(public_data["corporation_id"] in corp_list)
+        
         return ban_notice(request)
 
     if request.user.is_authenticated:
