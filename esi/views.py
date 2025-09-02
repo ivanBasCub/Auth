@@ -96,6 +96,31 @@ def character_skill_points(character):
     
     return character
 
+def update_character_skills(character):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2020-01-01",
+        "X-Tenant": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {character.accessToken}"
+    }
+
+    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/skills', headers=headers)
+    data = response.json()
+    character.totalSkillPoints = data["total_sp"]
+
+    list_skills = {}
+    
+    
+    for skill in data["skills"]:
+        name = item_name(skill["skill_id"])
+        list_skills[name] = skill["trained_skill_level"]
+    
+    character.skills = list_skills
+    
+    return character
+
 
 def fit_list():
     character = EveCharater.objects.filter(characterId = settings.EVE_BOT_CHAR_ID).first()
