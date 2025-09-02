@@ -50,7 +50,7 @@ def audit_account(request):
     isk_total = formatear_numero(isk_total)
     skill_points_total = formatear_numero(skill_points_total)
 
-    return render(request, "audit.html",{
+    return render(request, "audit/audit.html",{
         "main_pj" : main_pj,
         "list_pjs" : list_pjs,
         "isk" : isk_total,
@@ -81,7 +81,7 @@ def fittings(request):
     doctrines = Doctrine.objects.exclude(doctitle = "undoctrine").all()
     doc_categories = Categories.objects.filter(type = 1).all()
 
-    return render(request, "fittings.html", {
+    return render(request, "doctrine/fittings.html", {
         "main_pj" : main_pj,
         "list_doctrines" : doctrines,
         "categories" : doc_categories
@@ -94,7 +94,7 @@ def doctrine(request, doc_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     doctrine_fits = FitShip.objects.filter(fitDoctrine = doctrine).all()
 
-    return render(request, "doctrines.html",{
+    return render(request, "doctrine/doctrines.html",{
         "main_pj" : main_pj,
         "doctrine" : doctrine,
         "fits" : doctrine_fits
@@ -157,7 +157,7 @@ def fit(request, fit_id):
 
     etf_str = "".join(etf_text)
 
-    return render(request, "fit.html",{
+    return render(request, "doctrine/fit/fit.html",{
         "main_pj" : main_pj,
         "list_pj" : list_pj,
         "fit" : fit_data,
@@ -184,7 +184,7 @@ def admin_doctrines(request):
     list_doctrines = Doctrine.objects.all()
     list_categories = Categories.objects.all()
 
-    return render(request, "confDoctrines.html",{
+    return render(request, "doctrine/confDoctrines.html",{
         "main_pj" : main_pj,
         "list_doctrines" : list_doctrines,
         "list_categories" : list_categories
@@ -222,7 +222,7 @@ def add_doctrine(request):
 
         return redirect("/auth/fittings/admin/")
     else:
-        return render(request, "addDoctrine.html",{
+        return render(request, "doctrine/addDoctrine.html",{
             "main_pj" : main_pj,
             "fits" : doctrine_fits,
             "categories" : doctrines_categories
@@ -263,7 +263,7 @@ def mod_doctrine(request, doctrine_id):
         
         return redirect("/auth/fittings/admin/")
     else:
-        return render(request, "modDoctrine.html",{
+        return render(request, "doctrine/modDoctrine.html",{
             "main_pj" : main_pj,
             "doctrine" : doctrine,
             "categories" : doctrines_categories,
@@ -297,7 +297,7 @@ def add_category(request):
         return redirect("/auth/fittings/admin/")
 
     else:
-        return render(request, "addCategory.html",{
+        return render(request, "doctrine/category/addCategory.html",{
             "main_pj" : main_pj
         })
 
@@ -318,7 +318,7 @@ def mod_category(request, category_id):
 
         return redirect("/auth/fittings/admin/")
     else:
-        return render(request, "modCategory.html",{
+        return render(request, "doctrine/category/modCategory.html",{
             "main_pj" : main_pj,
             "category" : category
         })
@@ -360,7 +360,7 @@ def mod_fit(request, fit_id):
 
         return redirect(f"/auth/fittings/fit/{fit_id}/")
     else:
-        return render(request, "modFit.html",{
+        return render(request, "doctrine/fit/modFit.html",{
             "main_pj" : main_pj,
             "fit" : fit_data,
             "categories" : category_list
@@ -375,7 +375,7 @@ def banlist(request):
     banlist = BannedCharacter.objects.all()
     categories = BanCategory.objects.all()
     
-    return render(request, "banlist.html",{
+    return render(request, "ban/banlist.html",{
         "main_pj" : main_pj,
         "banlist" : banlist,
         "categories" : categories
@@ -404,7 +404,7 @@ def add_ban(request):
 
         return redirect("/auth/corp/banlist/")
     else:
-        return render(request, "addBan.html",{
+        return render(request, "ban/addBan.html",{
             "main_pj" : main_pj,
             "list_pjs" : list_pjs,
             "categories" : list_categories
@@ -427,7 +427,7 @@ def ban_categories(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     categories = BanCategory.objects.all()
 
-    return render(request, "banCategoryList.html",{
+    return render(request, "ban/category/banCategoryList.html",{
         "main_pj" : main_pj,
         "categories" : categories
     })
@@ -447,7 +447,7 @@ def add_ban_category(request):
         return redirect("/auth/corp/banlist/categories/")
 
     else:
-        return render(request, "addBanCategory.html",{
+        return render(request, "ban/category/addBanCategory.html",{
             "main_pj" : main_pj
         })
 
@@ -472,7 +472,7 @@ def fat_list(request):
     fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
     
 
-    return render(request, "fatlist.html",{
+    return render(request, "fat/fatlist.html",{
         "main_pj" : main_pj,
         "list_pj" : list_pj,
         "fats" : fats
@@ -499,7 +499,7 @@ def add_fat(request):
 
         return redirect("/auth/fats/list/")
     else:
-        return render(request, "addFat.html",{
+        return render(request, "fat/addFat.html",{
             "main_pj" : main_pj,
             "list_pj" : list_pj,
             "fleet_types" : fleet_types,
@@ -518,7 +518,7 @@ def member_list(request):
         member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
 
 
-    return render(request, "corpMembersList.html",{
+    return render(request, "corp/member/corpMembersList.html",{
         "main_pj" : main_pj,
         "members" : members
     })
@@ -550,7 +550,7 @@ def group_list(request):
         if notification.exists():
             group.notification = True
 
-    return render(request, "listGroups.html", {
+    return render(request, "group/listGroups.html", {
         "main_pj": main_pj,
         "groups" : groups,
         "notification_list": notification_list
@@ -576,7 +576,7 @@ def group_nofitication_list(request):
 
         notification.delete()
 
-    return render(request, "listGroupsNotifications.html",{
+    return render(request, "group/listGroupsNotifications.html",{
         "main_pj": main_pj,
         "list_notifications" : list_notifications
     })
