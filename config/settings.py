@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'authhelgast.com',
     'www.authhelgast.com',
-    '51.38.155.151'
+    '51.38.115.151'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
