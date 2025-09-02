@@ -33,7 +33,9 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'authhelgast.com'
+    'authhelgast.com',
+    'www.authhelgast.com',
+    '51.38.155.151'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
