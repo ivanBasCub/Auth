@@ -10,6 +10,7 @@ from datetime import timedelta
 from django.contrib.auth.models import User, Group
 import groups.views as groups_views
 from groups.models import GroupNotifications
+from skillplans.models import Skillplan, Skillplan_CheckList
 
 # Create your views here.
 def index(request):
@@ -580,3 +581,129 @@ def group_nofitication_list(request):
         "main_pj": main_pj,
         "list_notifications" : list_notifications
     })
+
+# Vista de usuario para comprobar si tiene completo los skill plans
+@login_required(login_url="/")
+def skill_plan_checkers(request):
+    def check_skill(pj_skill, skillplan):
+        for skill, nivel in skillplan.items():
+            if skill not in pj_skill or pj_skill[skill] < nivel:
+                return False
+        return True
+
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main = True).first()
+    skillplan_list = Skillplan.objects.all()
+
+    for sp in skillplan_list:
+        for pj in list_pj:
+            pj_skill = pj.skills
+            sp_skills = sp.skills
+            status = check_skill(pj_skill, sp_skills)
+            
+            checklist_obj = Skillplan_CheckList.objects.filter(
+                Skillplan = sp,
+                character = pj
+            ).first()
+
+            if checklist_obj:
+                print(sp.name, " / ", pj.characterName, " / " ,status)
+                checklist_obj.status = status
+            else:
+                checklist_obj = Skillplan_CheckList.objects.create(status=status)
+                checklist_obj.Skillplan.add(sp)
+                checklist_obj.character.add(pj)
+
+            checklist_obj.save()
+
+    checklist = Skillplan_CheckList.objects.filter(character__in = list_pj).all()
+
+    return render(request, "audit/skills/skillplan.html",{
+        "main_pj": main_pj,
+        "list_pj": list_pj,
+        "checklist" : checklist
+    })
+
+# Ver lista de skillsPlans
+@login_required(login_url="/")
+def skill_plan_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_skillplans = Skillplan.objects.all()
+
+    return render(request, "audit/skills/skillplanlist.html",{
+        "main_pj" : main_pj,
+        "skillplans" : list_skillplans
+    })
+
+@login_required(login_url="/")
+def add_skill_plan(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        name = request.POST.get("name","").strip()
+        desc = request.POST.get("desc","").strip()
+        skills = request.POST.get("skills","").strip()
+
+        skills_dict = {}
+        for linea in skills.strip().splitlines():
+            if linea.strip():
+                *nombre, nivel = linea.strip().split()
+                nombre_skill = " ".join(nombre)
+                nivel = int(nivel)
+                # Si ya existe, guardamos el nivel más alto
+                if nombre_skill in skills_dict:
+                    skills_dict[nombre_skill] = max(skills_dict[nombre_skill], nivel)
+                else:
+                    skills_dict[nombre_skill] = nivel
+
+        skill_plan = Skillplan.objects.create(
+            name = name,
+            desc = desc,
+            skills = skills_dict
+        )
+        skill_plan.save()
+
+        return redirect("/auth/admin/skillplans/")
+    else:
+        return render(request, "audit/skills/addskillplan.html",{
+            "main_pj" : main_pj
+        })
+
+@login_required(login_url="/")
+def mod_skill_plan(request, skillplanid):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    sp = Skillplan.objects.get(id = skillplanid)
+
+    if request.method == "POST":
+        name = request.POST.get("name","").strip()
+        desc = request.POST.get("desc","").strip()
+        skills = request.POST.get("skills","").strip()
+
+        skills_dict = {}
+        for linea in skills.strip().splitlines():
+            if linea.strip():
+                *nombre, nivel = linea.strip().split()
+                nombre_skill = " ".join(nombre)
+                nivel = int(nivel)
+                # Si ya existe, guardamos el nivel más alto
+                if nombre_skill in skills_dict:
+                    skills_dict[nombre_skill] = max(skills_dict[nombre_skill], nivel)
+                else:
+                    skills_dict[nombre_skill] = nivel
+
+        sp.name = name
+        sp.desc = desc
+        sp.skills = skills
+        sp.save()
+
+    return render(request, "audit/skills/modskillplan.html",{
+        "main_pj" : main_pj,
+        "sp": sp
+    })
+
+@login_required(login_url="/")
+def del_skill_plan(request, skillplanid):
+    sp = Skillplan.objects.get(id = skillplanid)
+    checklist = Skillplan_CheckList.objects.filter(Skillplan = sp).delete()
+    sp.delete()
+    return redirect("/auth/admin/skillplans/")
