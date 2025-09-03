@@ -26,7 +26,9 @@ urlpatterns = [
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
     path('', web_views.index, name="main"),
     path('auth/dashboard/', web_views.dashboard, name="dashboard"),
+    # Character Audit
     path('auth/audit/', web_views.audit_account, name="audit"),
+    path('auth/audit/skillplans/', web_views.skill_plan_checkers, name="skill_checker"),
     # Doctrinas y fiteos
     path('auth/fittings/', web_views.fittings, name="list_fits"),
     path('auth/fittings/doctrine/<int:doc_id>/', web_views.doctrine, name="info_doctrine"),
@@ -53,5 +55,10 @@ urlpatterns = [
     path('auth/corp/memberlist/', web_views.member_list, name="memberlist"),
     # Groups
     path('auth/groups/', web_views.group_list, name="group-list"),
-    path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications")
+    path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications"),
+    # Skillplan
+    path('auth/admin/skillplans/', web_views.skill_plan_list, name="list-skillplans"),
+    path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="list-skillplans"),
+    path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="list-skillplans"),
+    path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="list-skillplans"),
 ]

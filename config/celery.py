@@ -31,6 +31,11 @@ app.conf.beat_schedule = {
         'task' : 'sso.tasks.inactive',
         'schedule' : 3600,
         'args' : ()
+    },
+    'update_character_skills':{
+        'task' : 'esi.tasks.character_skill_list',
+        'schedule' : 86400,
+        'args' : ()
     }
 }
 

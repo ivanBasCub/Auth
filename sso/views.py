@@ -145,7 +145,6 @@ def save_eve_character(user, user_info, tokens, expiration):
     
     character = esi_views.character_corp_alliance_info(character)
     character = esi_views.character_wallet_money(character)
-    character = esi_views.character_skill_points(character)
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
@@ -155,6 +154,8 @@ def save_eve_character(user, user_info, tokens, expiration):
         elif character.corpId == 98634987:
             group_high = Group.objects.get(name = "High-Sec")
             user.groups.add(group_high)
+
+    character = esi_views.character_skill_points(character)
 
     character.save()
 
