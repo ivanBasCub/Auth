@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os
+import os 
 from dotenv import load_dotenv
 from celery.schedules import crontab
 import os
