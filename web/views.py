@@ -519,7 +519,7 @@ def member_list(request):
         member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
 
 
-    return render(request, "corp/member/corpMembersList.html",{
+    return render(request, "corp/corpMembersList.html",{
         "main_pj" : main_pj,
         "members" : members
     })
