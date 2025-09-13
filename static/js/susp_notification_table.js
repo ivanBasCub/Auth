@@ -1,13 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const select = document.getElementById('banlist_category');
-    const tbody = document.querySelector('#banlist tbody');
+    const select = document.getElementById('suspiciuos_table_filter_pj');
+    const tbody = document.querySelector('#suspiciuos_table tbody');
 
     select.addEventListener('change', function () {
         const filtro = this.value.trim();
         const filas = tbody.querySelectorAll('tr');
 
         filas.forEach(fila => {
-            const categoria = fila.cells[2].textContent.trim();
+            const categoria = fila.cells[0].textContent.trim();
             if (filtro === '' || categoria === filtro) {
                 fila.style.display = '';
             } else {

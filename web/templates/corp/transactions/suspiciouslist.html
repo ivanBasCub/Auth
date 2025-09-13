@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load filters %}
+{% load static %}
+
+{% block style %}
+<title>Lista de Sospechosos - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default bg-dark text-light">
+                <div class="card-header">
+                    Lista de sospechosos
+                    <div class="float-end">
+                        <a href="/auth/corp/suspiciuos/list/add/" class="btn btn-sm btn-danger">
+                            <i class="bi bi-plus-circle"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-8">
+                            <div class="d-flex justify-content-start align-items-center gap-3">
+                                <label class="d-flex align-items-center">
+                                    Categoria:
+                                    <select class="form-control" id="suspiciuos_table_filter_pj" aria-controls="suspiciuos_table">
+                                        <option value="">Todos</option>
+                                        <option value="PJ">PJ</option>
+                                        <option value="Corp">Corp</option>
+                                        <option value="Alliance">Alliance</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row dt-row">
+                        <table class="table table-dark table-hover dataTable no-footer" id="suspiciuos_table" aria-describedby="suspiciuos_table_info">
+                            <thead>
+                                <tr>
+                                    <th class="col">Categoria</th>
+                                    <th class="col">Nombre</th>
+                                    <th class="col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for susp in list_susp %}
+                                    <tr>
+                                        <td class="col">
+                                            {% if susp.suspicious_type == 1 %}
+                                                PJ
+                                            {% elif susp.suspicious_type == 2 %}
+                                                Corp
+                                            {% else %}
+                                                Alliance
+                                            {% endif %}
+                                        </td>
+                                        <td class="col"> {{susp.suspicious_name}} </td>
+                                        <td class="col"> <a href="/auth/corp/suspiciuos/list/del/{{susp.id}}/" class="btn btn-sm btn-danger"><i class="bi bi-trash3-fill"></i></a> </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<srcipt src="{% static 'js/susp_notification_table.js' %}"></srcipt>
+{% endblock %}

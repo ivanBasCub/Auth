@@ -2,9 +2,10 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
-from ban.models import BannedCharacter, BanCategory
+from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
 from fats.models import Fats, FleetType
 from fats.views import create_fats
+import esi.views as esi_views
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User, Group
@@ -151,7 +152,7 @@ def doctrine(request, doc_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     doctrine_fits = FitShip.objects.filter(fitDoctrine = doctrine).all()
 
-    return render(request, "doctrine/doctrines.html",{
+    return render(request, "doctrine/doctrine.html",{
         "main_pj" : main_pj,
         "doctrine" : doctrine,
         "fits" : doctrine_fits
@@ -466,6 +467,75 @@ def mod_fit(request, fit_id):
         })
 
 ## CORP
+
+### SUSPICIOUS TRANSFERENCES
+
+#### View Suspicious Notification list
+@login_required(login_url="/")
+def suspicious_notification_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    notifications = SuspiciousNotification.objects.all()
+    pj_suspicious = EveCharater.objects.filter(
+        suspiciousnotification__in=notifications
+    ).distinct()
+    
+    for n in notifications:
+        n.amount = format_number(n.amount)
+
+    return render(request, "corp/transactions/notificationlist.html",{
+        'main_pj' : main_pj,
+        "notifications" : notifications,
+        "pj_list": pj_suspicious
+    })
+
+#### View Suspiciuos List
+@login_required(login_url="/")
+def suspicious_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_susp = Suspicious.objects.all()
+    
+    
+
+    return render(request,"corp/transactions/suspiciouslist.html",{
+        "main_pj" : main_pj,
+        "list_susp" : list_susp
+    })
+
+#### Add Suspiciuos
+@login_required(login_url="/")
+def add_suspicious(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        suspicious_id = int(request.POST.get("suspicious_id",0).strip())
+        suspicious_type = int(request.POST.get("suspicious_type",0).strip())
+        
+
+        if suspicious_type != 0 and suspicious_id != 0:
+            new_suspicious = Suspicious.objects.create(
+                suspicious_id = suspicious_id,
+                suspicious_type = suspicious_type
+            )
+
+            print(suspicious_type)
+            new_suspicious.suspicious_name = esi_views.suspicious_name(suspicious_id,suspicious_type)
+
+            new_suspicious.save()
+
+            return redirect("/auth/corp/suspiciuos/list/")
+
+    return render(request,"corp/transactions/addsuspiciuos.html",{
+        "main_pj" : main_pj
+    })
+
+#### Del Suspiciuos
+@login_required(login_url="/")
+def del_suspicious(request,susp_id):
+    susp = Suspicious.objects.get(id = susp_id)
+
+    susp.delete()
+
+    return redirect("/auth/corp/suspiciuos/list/")
 
 ### BANS
 

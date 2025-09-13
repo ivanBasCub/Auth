@@ -2,7 +2,10 @@ from django.shortcuts import render
 from django.conf import settings
 from sso.models import EveCharater
 from doctrines.models import FitShip, Categories, Doctrine
+from ban.models import Suspicious, SuspiciousNotification
+from datetime import datetime
 import requests
+import json
 
 # Funcion para conseguir informaciónde la corp y la alianza
 def character_corp_alliance_info(character):
@@ -257,6 +260,98 @@ def solar_system_name(solar_system_ID):
     }
 
     response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/systems/{solar_system_ID}", headers = headers_2)
+    data = response.json()
+
+    return data["name"]
+
+def transfers(character):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-08-26",
+        "X-Tenant": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {character.accessToken}"
+    }
+
+    params = {
+        "page" : "1"
+    }
+
+    response = requests.get(
+        f"{settings.EVE_ESI_API_URL}/characters/{character.characterId}/wallet/journal",
+        headers= headers,
+        params= params
+    )
+
+    data_transfer = response.json()
+
+    type_transfers = [
+        "corporation_id",
+        "alliance_id",
+        "character_id",
+        "contract_id",
+        ""
+    ]
+
+    suspiciuos_list = set(Suspicious.objects.all().values_list('suspicious_id', flat=True))
+
+    for transfer in data_transfer:
+        id_check_1 = transfer.get("first_party_id",0)
+        id_check_2 = transfer.get("second_party_id",0)
+
+        transfer_type = transfer.get("context_id_type", "")
+
+        if transfer_type in type_transfers:
+            if transfer["ref_type"] != "daily_goal_payouts":
+                if id_check_1 in suspiciuos_list:
+                    create_transfer_notification(character, transfer["first_party_id"], transfer["date"], transfer["amount"])
+                elif id_check_2 in suspiciuos_list:
+                    create_transfer_notification(character, transfer["second_party_id"], transfer["date"], transfer["amount"])
+
+
+
+def create_transfer_notification(character, suspicious_id, date_str, amount):
+    dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+    date = dt.date()
+
+    suspicious = Suspicious.objects.get(suspicious_id=suspicious_id)
+
+    if amount < 0:
+        amount *= -1
+
+    exists = SuspiciousNotification.objects.filter(
+        date = date,
+        character = character,
+        suspicious_Target = suspicious
+    ).exists()
+
+    if not exists:
+        SuspiciousNotification.objects.create(
+            character = character,
+            suspicious_Target = suspicious,
+            date = date,
+            amount = amount
+        )
+    
+
+
+def suspicious_name(id, susp_type):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-08-26",
+        "X-Tenant": "",
+        "Accept": "application/json"
+    }
+
+    if susp_type == 1:
+        response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{id}", headers= headers)
+    elif susp_type == 2:
+        response = requests.get(f"{settings.EVE_ESI_API_URL}/corporations/{id}", headers= headers)
+    else:
+        response = requests.get(f"{settings.EVE_ESI_API_URL}/alliances/{id}", headers= headers)
+
     data = response.json()
 
     return data["name"]

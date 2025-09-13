@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load filters %}
+{% load static %}
+
+
+{% block style %}
+<title>Movimientos Sospechosos - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">
+                        Lista de movimientos sospechosos
+                        <div class="float-end">
+                            <a href="/auth/corp/suspiciuos/list/" class="btn btn-sm btn-danger">Lista de sospechosos</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-8">
+                            <div class="d-flex justify-content-start align-items-center gap-3">
+                                <label class="d-flex align-items-center">
+                                    Personajes Sospechosos:
+                                    <select class="form-control" id="suspiciuos_table_filter_pj" aria-controls="suspiciuos_table">
+                                        <option value="">Todos</option>
+                                        {% if pj_list %}
+                                            {% for pj in pj_list %}
+                                            <option value="{{pj.characterName}}">{{pj.characterName}}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row dt-row">
+                        <table class="table table-dark table-hover dataTable no-footer" id="suspiciuos_table" aria-describedby="suspiciuos_table_info">
+                            <thead>
+                                <tr>
+                                    <th class="col">Personaje</th>
+                                    <th class="col">Main</th>
+                                    <th class="col">Sospechoso</th>
+                                    <th class="col">Date</th>
+                                    <th class="col">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if notifications %}
+                                    {% for noti in notifications %}
+                                        <tr>
+                                            <td>{{ noti.character.characterName }}</td>
+                                            <td>{{ noti.character.user_character.username }}</td>
+                                            <td>{{ noti.suspicious_Target.suspicious_name }}</td>
+                                            <td>{{noti.date}}</td>
+                                            <td>{{noti.amount}}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td class="col text-center" colspan="5">No hay movimientos sospechosos en los ultimos 30 días</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="{% static 'js/susp_notification_table.js' %}"></script>
+{% endblock %}
