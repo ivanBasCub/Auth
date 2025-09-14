@@ -36,6 +36,11 @@ app.conf.beat_schedule = {
         'task' : 'esi.tasks.character_skill_list',
         'schedule' : 86400,
         'args' : ()
+    },
+    'check_transfers':{
+        'task' : 'ban.tasks.check_transfers',
+        'schedule': 3600,
+        'args': ()
     }
 }
 
