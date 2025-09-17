@@ -20,11 +20,11 @@ import sso.views as sso_views
 import web.views as web_views
 
 urlpatterns = [
+    path('', web_views.index, name="main"),
     path('admin/', admin.site.urls),
     path('sso/login/', sso_views.eve_login, name='eve_login'),
     path('sso/callback/', sso_views.eve_callback, name='eve_callback'),
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
-    path('', web_views.index, name="main"),
     path('auth/dashboard/', web_views.dashboard, name="dashboard"),
     # Character Audit
     path('auth/audit/', web_views.audit_account, name="audit"),
@@ -61,4 +61,9 @@ urlpatterns = [
     path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="list-skillplans"),
     path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="list-skillplans"),
     path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="list-skillplans"),
+    # Suspicious Transfers
+    path('auth/corp/suspiciuos/notifications/',web_views.suspicious_notification_list, name="suspicious list"),
+    path('auth/corp/suspiciuos/list/', web_views.suspicious_list, name="list-suspiciuos"),
+    path('auth/corp/suspiciuos/list/add/', web_views.add_suspicious, name="add-suspiciuos"),
+    path('auth/corp/suspiciuos/list/del/<int:susp_id>/', web_views.del_suspicious, name="delete-suspiciuos"),
 ]

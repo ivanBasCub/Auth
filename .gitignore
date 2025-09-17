@@ -6,3 +6,4 @@ DockerFile
 **/__pycache__/
 *.pyc
 test.py
+/bot/json/*

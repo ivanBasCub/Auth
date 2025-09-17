@@ -2,9 +2,10 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
-from ban.models import BannedCharacter, BanCategory
+from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
 from fats.models import Fats, FleetType
 from fats.views import create_fats
+import esi.views as esi_views
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User, Group
@@ -12,14 +13,44 @@ import groups.views as groups_views
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
 
-# Create your views here.
+# ADDITIONAL FUNCTIONS
+def format_number(n):
+    sufijos = [(1_000_000_000_000, "T"), (1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")]
+    
+    for divisor, sufijo in sufijos:
+        if abs(n) >= divisor:
+            return f"{n / divisor:.2f} {sufijo}"
+
+    return str(n)
+
+def check_skill(pj_skill, skillplan):
+        for skill, nivel in skillplan.items():
+            if skill not in pj_skill or pj_skill[skill] < nivel:
+                return False
+        return True
+
+def formater(text, items):
+        for item in items:
+            if item.get("flag").startswith("HiSlot") or item.get("flag").startswith("MedSlot") or item.get("flag").startswith("LoSlot") or item.get("flag").startswith("RigSlot") or item.get("flag").startswith("SubSystemSlot"):
+                text.append(f"{item['itemName']}\n")
+            else:
+                text.append(f"{item['itemName']} x{item['quantity']}\n")
+
+        text.append("\n")
+
+        return text
+
+
+# INDEX
 def index(request):
     if request.user.is_authenticated:
         return redirect("/auth/dashboard/")
     else:
         return render(request, "index.html")
 
-# Vista principal del usuario
+# AUTH
+
+## DASHBOARD
 @login_required(login_url='/')
 def dashboard(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
@@ -33,7 +64,9 @@ def dashboard(request):
         "groups" : request.user.groups.all()
     })
 
-# Vista de los personajes del usuario
+## AUDIT
+
+### Eve Characters List
 @login_required(login_url='/')
 def audit_account(request):
     list_pjs = EveCharater.objects.filter(user_character = request.user).all()
@@ -45,11 +78,11 @@ def audit_account(request):
     for pj in list_pjs:
         isk_total+= pj.walletMoney
         skill_points_total += pj.totalSkillPoints
-        pj.walletMoney = formatear_numero(pj.walletMoney)
-        pj.totalSkillPoints = formatear_numero(pj.totalSkillPoints)
+        pj.walletMoney = format_number(pj.walletMoney)
+        pj.totalSkillPoints = format_number(pj.totalSkillPoints)
 
-    isk_total = formatear_numero(isk_total)
-    skill_points_total = formatear_numero(skill_points_total)
+    isk_total = format_number(isk_total)
+    skill_points_total = format_number(skill_points_total)
 
     return render(request, "audit/audit.html",{
         "main_pj" : main_pj,
@@ -58,66 +91,290 @@ def audit_account(request):
         "skill_points" : skill_points_total
     })
 
-# Funcion para formatear numeros
-def formatear_numero(n):
-    # Lista de sufijos y divisores
-    sufijos = [
-        (1_000_000_000_000, "T"),  # Trillones
-        (1_000_000_000, "B"),      # Billions (miles de millones)
-        (1_000_000, "M"),          # Millones
-        (1_000, "K")               # Miles
-    ]
-    
-    for divisor, sufijo in sufijos:
-        if abs(n) >= divisor:
-            return f"{n / divisor:.2f} {sufijo}"
-    
-    # Si es menor de mil, se devuelve tal cual
-    return str(n)
+### Skill Plan Checker
+@login_required(login_url="/")
+def skill_plan_checkers(request):
 
-# Zona de Fiteos
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main = True).first()
+    skillplan_list = Skillplan.objects.all()
+
+    for sp in skillplan_list:
+        for pj in list_pj:
+            pj_skill = pj.skills
+            sp_skills = sp.skills
+            status = check_skill(pj_skill, sp_skills)
+            
+            checklist_obj = Skillplan_CheckList.objects.filter(
+                Skillplan = sp,
+                character = pj
+            ).first()
+
+            if checklist_obj:
+                print(sp.name, " / ", pj.characterName, " / " ,status)
+                checklist_obj.status = status
+            else:
+                checklist_obj = Skillplan_CheckList.objects.create(status=status)
+                checklist_obj.Skillplan.add(sp)
+                checklist_obj.character.add(pj)
+
+            checklist_obj.save()
+
+    checklist = Skillplan_CheckList.objects.filter(character__in = list_pj).all()
+
+    return render(request, "audit/skills/skillplan.html",{
+        "main_pj": main_pj,
+        "list_pj": list_pj,
+        "checklist" : checklist
+    })
+
+## FLEETS
+
+### DOCTRINES
+
+#### Doctrine List
 @login_required(login_url='/')
 def fittings(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     doctrines = Doctrine.objects.exclude(doctitle = "undoctrine").all()
     doc_categories = Categories.objects.filter(type = 1).all()
 
-    return render(request, "doctrine/fittings.html", {
+    return render(request, "doctrine/doctrinelist.html", {
         "main_pj" : main_pj,
         "list_doctrines" : doctrines,
         "categories" : doc_categories
     })
 
-# Vista de una doctrina
+#### Doctrine Info
 @login_required(login_url="/")
 def doctrine(request, doc_id):
     doctrine = Doctrine.objects.get(id = doc_id)
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     doctrine_fits = FitShip.objects.filter(fitDoctrine = doctrine).all()
 
-    return render(request, "doctrine/doctrines.html",{
+    return render(request, "doctrine/doctrine.html",{
         "main_pj" : main_pj,
         "doctrine" : doctrine,
         "fits" : doctrine_fits
     })
 
-# Vista de un fiteo
+
+#### Doctrine Admin
+@login_required(login_url="/")
+def admin_doctrines(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_doctrines = Doctrine.objects.all()
+    list_categories = Categories.objects.all()
+
+    return render(request, "doctrine/confDoctrines.html",{
+        "main_pj" : main_pj,
+        "list_doctrines" : list_doctrines,
+        "list_categories" : list_categories
+    })
+
+#### New Doctrine
+@login_required(login_url="/")
+def add_doctrine(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    doctrine_fits = FitShip.objects.all()
+    doctrines_categories = Categories.objects.filter(type = 1).all()
+
+    if request.method == "POST":
+        doctrine_fits = request.POST.getlist("fit")
+        doctrine_name = request.POST.get("doctrineTitle","").strip()
+        doctrine_desc = request.POST.get("doctrineDesc","").strip()
+        doctrine_category = int(request.POST.get("categoty",0))
+
+        if doctrine_name != "":
+            new_doctrine = Doctrine.objects.create(doctitle = doctrine_name, desc = doctrine_desc)
+
+            if doctrine_category != 0:
+                category = Categories.objects.get(id = doctrine_category)
+                new_doctrine.docCategory.add(category)
+
+            new_doctrine.save()
+
+            for fit in doctrine_fits:
+                try:
+                    fit_obj = FitShip.objects.get(id = int(fit))
+                    fit_obj.fitDoctrine.add(new_doctrine)
+                    fit_obj.save()
+                except FitShip.DoesNotExist:
+                    pass
+
+        return redirect("/auth/fittings/admin/")
+    else:
+        return render(request, "doctrine/addDoctrine.html",{
+            "main_pj" : main_pj,
+            "fits" : doctrine_fits,
+            "categories" : doctrines_categories
+        })
+    
+#### Mod Doctrine
+@login_required(login_url="/")
+def mod_doctrine(request, doctrine_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    doctrine = Doctrine.objects.get(id = doctrine_id)
+    doctrines_categories = Categories.objects.filter(type = 1).all()
+    fits = FitShip.objects.all()
+
+    if request.method == "POST":
+        doctrine_fits = request.POST.getlist("fit")
+        doctrine_name = request.POST.get("doctrineTitle","").strip()
+        doctrine_desc = request.POST.get("doctrineDesc","").strip()
+        doctrine_category = int(request.POST.get("categoty",0))
+
+        if doctrine_name != "":
+            doctrine.doctitle = doctrine_name
+            doctrine.desc = doctrine_desc
+            doctrine.docCategory.clear()
+
+            if doctrine_category != 0:
+                category = Categories.objects.get(id = doctrine_category)
+                doctrine.docCategory.add(category)
+            
+            doctrine.save()
+
+            for fit in fits:
+                if str(fit.id) in doctrine_fits:
+                    fit.fitDoctrine.add(doctrine)
+                else:
+                    fit.fitDoctrine.remove(doctrine)
+                
+                fit.save()
+        
+        return redirect("/auth/fittings/admin/")
+    else:
+        return render(request, "doctrine/modDoctrine.html",{
+            "main_pj" : main_pj,
+            "doctrine" : doctrine,
+            "categories" : doctrines_categories,
+            "fits" : fits
+        })
+
+#### Del Doctrine
+@login_required(login_url="/")
+def del_doctrine(request, doctrine_id):
+    try:
+        doctrine = Doctrine.objects.get(id=doctrine_id)
+        doctrine.delete()
+    except Doctrine.DoesNotExist:
+        pass
+
+    return redirect("/auth/fittings/admin/")
+
+
+### DOCTRINES CATEGORIES
+
+#### Add Doctrine category
+@login_required(login_url="/")
+def add_category(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        category_name = request.POST.get("categoryName","").strip()
+        category_type = int(request.POST.get("categoryType",0))
+
+        if category_name != "":
+            new_category = Categories(name=category_name, type=category_type)
+            new_category.save()
+
+        return redirect("/auth/fittings/admin/")
+
+    else:
+        return render(request, "doctrine/category/addCategory.html",{
+            "main_pj" : main_pj
+        })
+    
+#### Mod Doctrine category
+@login_required(login_url="/")
+def mod_category(request, category_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    category = Categories.objects.get(id = category_id)
+
+    if request.method == "POST":
+        category_name = request.POST.get("categoryName","").strip()
+        category_type = int(request.POST.get("categoryType",0))
+
+        if category_name != "":
+            category.name = category_name
+            category.type = category_type
+            category.save()
+
+        return redirect("/auth/fittings/admin/")
+    else:
+        return render(request, "doctrine/category/modCategory.html",{
+            "main_pj" : main_pj,
+            "category" : category
+        })
+    
+#### Del Doctrine category
+@login_required(login_url="/")
+def del_category(request, category_id):
+    try:
+        category = Categories.objects.get(id=category_id)
+        if category.name != "uncategorized":
+            category.delete()
+    except Categories.DoesNotExist:
+        pass
+
+    return redirect("/auth/fittings/admin/")
+
+### FATS
+
+#### View FAT list
+@login_required(login_url="/")
+def fat_list(request):
+    limit_30_days = timezone.now() - timedelta(days=30)
+
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main=True).first()
+    fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
+    
+
+    return render(request, "fat/fatlist.html",{
+        "main_pj" : main_pj,
+        "list_pj" : list_pj,
+        "fats" : fats
+    })
+
+#### Create FAT
+@login_required(login_url="/")
+def add_fat(request):
+    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pj.filter(main=True).first()
+    doctrines = Doctrine.objects.all()
+    fleet_types = FleetType.objects.all()
+
+    if request.method == "POST":
+        pj_id = int(request.POST.get("fc",0).strip())
+        doctrine_id = int(request.POST.get("doctrine",0).strip())
+        fleet_type_id = int(request.POST.get("type",0).strip())
+        fleet_name = request.POST.get("name","").strip()
+
+        if pj_id != 0 and doctrine_id != 0 and fleet_type_id != 0 and fleet_name != "":
+            try:
+                create_fats(pj_id, doctrine_id, fleet_type_id, fleet_name)
+            except Exception as e:
+                print("Error creating fats:", e)
+
+        return redirect("/auth/fats/list/")
+    else:
+        return render(request, "fat/addFat.html",{
+            "main_pj" : main_pj,
+            "list_pj" : list_pj,
+            "fleet_types" : fleet_types,
+            "doctrines" : doctrines
+        })
+
+### FITS
+
+#### Fit view
 @login_required(login_url="/")
 def fit(request, fit_id):
     def items_filter(flag):
         return [item for item in item_list if item.get("flag").startswith(flag)]
-
-    def formater(text, items):
-        for item in items:
-            if item.get("flag").startswith("HiSlot") or item.get("flag").startswith("MedSlot") or item.get("flag").startswith("LoSlot") or item.get("flag").startswith("RigSlot") or item.get("flag").startswith("SubSystemSlot"):
-                text.append(f"{item['itemName']}\n")
-            else:
-                text.append(f"{item['itemName']} x{item['quantity']}\n")
-
-        text.append("\n")
-
-        return text
-
+    
     def check_skill(pj_skill, fit_skill):
         for skill, nivel in fit_skill.items():
             if skill not in pj_skill or pj_skill[skill] < nivel:
@@ -178,165 +435,7 @@ def fit(request, fit_id):
         "fit_skills" : fit_data.min_skills
     })
 
-# Zona de administración de doctrinas
-@login_required(login_url="/")
-def admin_doctrines(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    list_doctrines = Doctrine.objects.all()
-    list_categories = Categories.objects.all()
-
-    return render(request, "doctrine/confDoctrines.html",{
-        "main_pj" : main_pj,
-        "list_doctrines" : list_doctrines,
-        "list_categories" : list_categories
-    })
-
-# Nueva doctrina
-@login_required(login_url="/")
-def add_doctrine(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    doctrine_fits = FitShip.objects.all()
-    doctrines_categories = Categories.objects.filter(type = 1).all()
-
-    if request.method == "POST":
-        doctrine_fits = request.POST.getlist("fit")
-        doctrine_name = request.POST.get("doctrineTitle","").strip()
-        doctrine_desc = request.POST.get("doctrineDesc","").strip()
-        doctrine_category = int(request.POST.get("categoty",0))
-
-        if doctrine_name != "":
-            new_doctrine = Doctrine.objects.create(doctitle = doctrine_name, desc = doctrine_desc)
-
-            if doctrine_category != 0:
-                category = Categories.objects.get(id = doctrine_category)
-                new_doctrine.docCategory.add(category)
-
-            new_doctrine.save()
-
-            for fit in doctrine_fits:
-                try:
-                    fit_obj = FitShip.objects.get(id = int(fit))
-                    fit_obj.fitDoctrine.add(new_doctrine)
-                    fit_obj.save()
-                except FitShip.DoesNotExist:
-                    pass
-
-        return redirect("/auth/fittings/admin/")
-    else:
-        return render(request, "doctrine/addDoctrine.html",{
-            "main_pj" : main_pj,
-            "fits" : doctrine_fits,
-            "categories" : doctrines_categories
-        })
-
-# Modificar doctrina
-@login_required(login_url="/")
-def mod_doctrine(request, doctrine_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    doctrine = Doctrine.objects.get(id = doctrine_id)
-    doctrines_categories = Categories.objects.filter(type = 1).all()
-    fits = FitShip.objects.all()
-
-    if request.method == "POST":
-        doctrine_fits = request.POST.getlist("fit")
-        doctrine_name = request.POST.get("doctrineTitle","").strip()
-        doctrine_desc = request.POST.get("doctrineDesc","").strip()
-        doctrine_category = int(request.POST.get("categoty",0))
-
-        if doctrine_name != "":
-            doctrine.doctitle = doctrine_name
-            doctrine.desc = doctrine_desc
-            doctrine.docCategory.clear()
-
-            if doctrine_category != 0:
-                category = Categories.objects.get(id = doctrine_category)
-                doctrine.docCategory.add(category)
-            
-            doctrine.save()
-
-            for fit in fits:
-                if str(fit.id) in doctrine_fits:
-                    fit.fitDoctrine.add(doctrine)
-                else:
-                    fit.fitDoctrine.remove(doctrine)
-                
-                fit.save()
-        
-        return redirect("/auth/fittings/admin/")
-    else:
-        return render(request, "doctrine/modDoctrine.html",{
-            "main_pj" : main_pj,
-            "doctrine" : doctrine,
-            "categories" : doctrines_categories,
-            "fits" : fits
-        })
-
-# Eliminar doctrina
-@login_required(login_url="/")
-def del_doctrine(request, doctrine_id):
-    try:
-        doctrine = Doctrine.objects.get(id=doctrine_id)
-        doctrine.delete()
-    except Doctrine.DoesNotExist:
-        pass
-
-    return redirect("/auth/fittings/admin/")
-
-# Añadir categoría
-@login_required(login_url="/")
-def add_category(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-
-    if request.method == "POST":
-        category_name = request.POST.get("categoryName","").strip()
-        category_type = int(request.POST.get("categoryType",0))
-
-        if category_name != "":
-            new_category = Categories(name=category_name, type=category_type)
-            new_category.save()
-
-        return redirect("/auth/fittings/admin/")
-
-    else:
-        return render(request, "doctrine/category/addCategory.html",{
-            "main_pj" : main_pj
-        })
-
-# Modificar categoría
-@login_required(login_url="/")
-def mod_category(request, category_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    category = Categories.objects.get(id = category_id)
-
-    if request.method == "POST":
-        category_name = request.POST.get("categoryName","").strip()
-        category_type = int(request.POST.get("categoryType",0))
-
-        if category_name != "":
-            category.name = category_name
-            category.type = category_type
-            category.save()
-
-        return redirect("/auth/fittings/admin/")
-    else:
-        return render(request, "doctrine/category/modCategory.html",{
-            "main_pj" : main_pj,
-            "category" : category
-        })
-
-# Eliminar categoría
-@login_required(login_url="/")
-def del_category(request, category_id):
-    try:
-        category = Categories.objects.get(id=category_id)
-        if category.name != "uncategorized":
-            category.delete()
-    except Categories.DoesNotExist:
-        pass
-
-    return redirect("/auth/fittings/admin/")
-
-# Modificar fiteo
+#### Mod Fit
 @login_required(login_url="/")
 def mod_fit(request, fit_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -366,10 +465,81 @@ def mod_fit(request, fit_id):
             "fit" : fit_data,
             "categories" : category_list
         })
-    
-# Zona de administración de corp
 
-# Lista de baneos
+## CORP
+
+### SUSPICIOUS TRANSFERENCES
+
+#### View Suspicious Notification list
+@login_required(login_url="/")
+def suspicious_notification_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    notifications = SuspiciousNotification.objects.all()
+    pj_suspicious = EveCharater.objects.filter(
+        suspiciousnotification__in=notifications
+    ).distinct()
+    
+    for n in notifications:
+        n.amount = format_number(n.amount)
+
+    return render(request, "corp/transactions/notificationlist.html",{
+        'main_pj' : main_pj,
+        "notifications" : notifications,
+        "pj_list": pj_suspicious
+    })
+
+#### View Suspiciuos List
+@login_required(login_url="/")
+def suspicious_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_susp = Suspicious.objects.all()
+    
+    
+
+    return render(request,"corp/transactions/suspiciouslist.html",{
+        "main_pj" : main_pj,
+        "list_susp" : list_susp
+    })
+
+#### Add Suspiciuos
+@login_required(login_url="/")
+def add_suspicious(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        suspicious_id = int(request.POST.get("suspicious_id",0).strip())
+        suspicious_type = int(request.POST.get("suspicious_type",0).strip())
+        
+
+        if suspicious_type != 0 and suspicious_id != 0:
+            new_suspicious = Suspicious.objects.create(
+                suspicious_id = suspicious_id,
+                suspicious_type = suspicious_type
+            )
+
+            print(suspicious_type)
+            new_suspicious.suspicious_name = esi_views.suspicious_name(suspicious_id,suspicious_type)
+
+            new_suspicious.save()
+
+            return redirect("/auth/corp/suspiciuos/list/")
+
+    return render(request,"corp/transactions/addsuspiciuos.html",{
+        "main_pj" : main_pj
+    })
+
+#### Del Suspiciuos
+@login_required(login_url="/")
+def del_suspicious(request,susp_id):
+    susp = Suspicious.objects.get(id = susp_id)
+
+    susp.delete()
+
+    return redirect("/auth/corp/suspiciuos/list/")
+
+### BANS
+
+#### Ban list
 @login_required(login_url="/")
 def banlist(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -382,7 +552,7 @@ def banlist(request):
         "categories" : categories
     })
 
-# Añadir baneo
+#### Add ban
 @login_required(login_url="/")
 def add_ban(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -405,13 +575,13 @@ def add_ban(request):
 
         return redirect("/auth/corp/banlist/")
     else:
-        return render(request, "ban/addBan.html",{
+        return render(request, "ban/addban.html",{
             "main_pj" : main_pj,
             "list_pjs" : list_pjs,
             "categories" : list_categories
         })
 
-# Eliminar baneo  
+#### Del ban
 @login_required(login_url="/")
 def del_ban(request, ban_id):
     try:
@@ -422,7 +592,9 @@ def del_ban(request, ban_id):
 
     return redirect("/auth/corp/banlist/")
 
-# Lista de categorías de baneos
+### BAN CATEGORIES
+
+#### List Ban Categories
 @login_required(login_url="/")
 def ban_categories(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -433,7 +605,7 @@ def ban_categories(request):
         "categories" : categories
     })
 
-# Añadir categoría de baneo
+#### Add Ban Cateogory
 @login_required(login_url="/")
 def add_ban_category(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -451,7 +623,8 @@ def add_ban_category(request):
         return render(request, "ban/category/addBanCategory.html",{
             "main_pj" : main_pj
         })
-
+    
+#### Del Ban Cateogory
 @login_required(login_url="/")
 def del_ban_category(request, category_id):
     try:
@@ -463,51 +636,7 @@ def del_ban_category(request, category_id):
 
     return redirect("/auth/corp/banlist/categories/")
 
-# Vista de Fats
-@login_required(login_url="/")
-def fat_list(request):
-    limit_30_days = timezone.now() - timedelta(days=30)
-
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
-    main_pj = list_pj.filter(main=True).first()
-    fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
-    
-
-    return render(request, "fat/fatlist.html",{
-        "main_pj" : main_pj,
-        "list_pj" : list_pj,
-        "fats" : fats
-    })
-
-@login_required(login_url="/")
-def add_fat(request):
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
-    main_pj = list_pj.filter(main=True).first()
-    doctrines = Doctrine.objects.all()
-    fleet_types = FleetType.objects.all()
-
-    if request.method == "POST":
-        pj_id = int(request.POST.get("fc",0).strip())
-        doctrine_id = int(request.POST.get("doctrine",0).strip())
-        fleet_type_id = int(request.POST.get("type",0).strip())
-        fleet_name = request.POST.get("name","").strip()
-
-        if pj_id != 0 and doctrine_id != 0 and fleet_type_id != 0 and fleet_name != "":
-            try:
-                create_fats(pj_id, doctrine_id, fleet_type_id, fleet_name)
-            except Exception as e:
-                print("Error creating fats:", e)
-
-        return redirect("/auth/fats/list/")
-    else:
-        return render(request, "fat/addFat.html",{
-            "main_pj" : main_pj,
-            "list_pj" : list_pj,
-            "fleet_types" : fleet_types,
-            "doctrines" : doctrines
-        })
-    
-# Vista de Lista de miembros
+### MEMBER LIST
 @login_required(login_url="/")
 def member_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -524,9 +653,9 @@ def member_list(request):
         "members" : members
     })
 
-# Vista de los grupos
+## GROUPS
 
-#Vista de los grupos disponibles
+### View groups list
 @login_required(login_url="/")
 def group_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -557,7 +686,7 @@ def group_list(request):
         "notification_list": notification_list
     })
 
-# Vista para resolver las solicitudes de grupo
+### View group application list
 @login_required(login_url="/")
 def group_nofitication_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -582,49 +711,9 @@ def group_nofitication_list(request):
         "list_notifications" : list_notifications
     })
 
-# Vista de usuario para comprobar si tiene completo los skill plans
-@login_required(login_url="/")
-def skill_plan_checkers(request):
-    def check_skill(pj_skill, skillplan):
-        for skill, nivel in skillplan.items():
-            if skill not in pj_skill or pj_skill[skill] < nivel:
-                return False
-        return True
+## SKILLPLANS
 
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
-    main_pj = list_pj.filter(main = True).first()
-    skillplan_list = Skillplan.objects.all()
-
-    for sp in skillplan_list:
-        for pj in list_pj:
-            pj_skill = pj.skills
-            sp_skills = sp.skills
-            status = check_skill(pj_skill, sp_skills)
-            
-            checklist_obj = Skillplan_CheckList.objects.filter(
-                Skillplan = sp,
-                character = pj
-            ).first()
-
-            if checklist_obj:
-                print(sp.name, " / ", pj.characterName, " / " ,status)
-                checklist_obj.status = status
-            else:
-                checklist_obj = Skillplan_CheckList.objects.create(status=status)
-                checklist_obj.Skillplan.add(sp)
-                checklist_obj.character.add(pj)
-
-            checklist_obj.save()
-
-    checklist = Skillplan_CheckList.objects.filter(character__in = list_pj).all()
-
-    return render(request, "audit/skills/skillplan.html",{
-        "main_pj": main_pj,
-        "list_pj": list_pj,
-        "checklist" : checklist
-    })
-
-# Ver lista de skillsPlans
+### View SkillPlan List
 @login_required(login_url="/")
 def skill_plan_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -635,6 +724,7 @@ def skill_plan_list(request):
         "skillplans" : list_skillplans
     })
 
+### Add SkillPlan
 @login_required(login_url="/")
 def add_skill_plan(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -669,6 +759,7 @@ def add_skill_plan(request):
             "main_pj" : main_pj
         })
 
+### Mod SkillPlan
 @login_required(login_url="/")
 def mod_skill_plan(request, skillplanid):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
@@ -701,6 +792,7 @@ def mod_skill_plan(request, skillplanid):
         "sp": sp
     })
 
+### Del SkillPlan
 @login_required(login_url="/")
 def del_skill_plan(request, skillplanid):
     sp = Skillplan.objects.get(id = skillplanid)
