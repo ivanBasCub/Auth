@@ -66,7 +66,6 @@ async def stopzkill(ctx, eve_id: str):
 # Task
 @tasks.loop(minutes=1)
 async def fetch_kills():
-    print("Hola")
     global ZKILL_DATA
     try:
         async with aiohttp.ClientSession() as session:
