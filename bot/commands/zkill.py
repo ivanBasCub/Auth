@@ -107,87 +107,90 @@ async def fetch_kills():
             if not new_kills:
                 continue
             
+            if data["last_kill"] is not None:
+                # Preparación de datos y creación del embed
+                for kill in reversed(new_kills):
+                    km_id = kill["killmail_id"]
+                    km_hash = kill["zkb"]["hash"]
+                    esi_url = f"https://esi.evetech.net/latest/killmails/{km_id}/{km_hash}/"
+                    async with session.get(esi_url) as esi_resp:
+                        if esi_resp.status != 200:
+                            continue
+                        km_data = await esi_resp.json()
+
+                    victim = km_data["victim"]
+                    ship_type_id = victim["ship_type_id"]
+                    system_id = km_data["solar_system_id"]
+                    character_id = victim.get("character_id")
+                    corp_id = victim.get("corporation_id")
+                    alliance_id = victim.get("alliance_id")
+                    top_damage_id = 0
+                    final_blow_id = 0
+                    num_attackers = len(km_data["attackers"])
+
+                    aux = 0
+                    for attacker in km_data["attackers"]:
+                        final_id = attacker.get("character_id",0)
+                        if aux < attacker["damage_done"]:
+                            aux = attacker["damage_done"]
+                            top_damage_id = final_id
+                        if attacker["final_blow"]:
+                            final_blow_id = final_id
+
+                    ship_name = await get_type_name(session, ship_type_id)
+                    system_name = await get_system_name(session, system_id)
+                    pilot_name = await get_character_name(session, character_id)
+                    corp_name = await get_corp_name(session, corp_id)
+                    alliance_name = await get_alliance_name(session, alliance_id)
+                    final_blow_name = ""
+                    top_damage_name = ""
+                    if top_damage_id != 0 and final_blow_id != 0:
+                        final_blow_name = await get_character_name(session, final_blow_id)
+                        top_damage_name = await get_character_name(session, top_damage_id)
+
+                    total_value = kill["zkb"].get("totalValue", 0)
+
+                    title_embed = f"**{pilot_name}** perdió una **{ship_name}** en {system_name}"
+
+                    if pilot_name == "":
+                        title_embed = f"**{corp_name}** perdió una **{ship_name}** en {system_name}"
+
+                    embed = discord.Embed(
+                        title=title_embed,
+                        url= f"https://zkillboard.com/kill/{km_id}/",
+                        color=discord.Color.red()
+                    )
+                    if type_eve_id == 1 and character_id != eve_id:
+                        embed.color = discord.Color.green()
+                    elif type_eve_id == 2 and corp_id != eve_id:
+                        embed.color = discord.Color.green()
+                    elif type_eve_id == 3 and alliance_id != eve_id:
+                        embed.color = discord.Color.green()
+
+                    if corp_name != "":
+                        embed.add_field(name="Corporación", value=f"[{corp_name}](https://zkillboard.com/corporation/{corp_id}/)", inline=True)
+                    if alliance_name != "":
+                        embed.add_field(name="Alianza", value=f"[{alliance_name}](https://zkillboard.com/alliance/{alliance_id}/)", inline=True)
+
+                    embed.add_field(name="Valor ISK", value=f"{total_value:,.2f} ISK", inline=False)
+                    embed.add_field(name="Numero de Participantes", value=f"{num_attackers}", inline=False)
+
+                    if top_damage_name != "":
+                        embed.add_field(name="Top Damage",value=f"[{top_damage_name}](https://zkillboard.com/character/{top_damage_id})", inline=True)
+                    if final_blow_name != "":
+                        embed.add_field(name="Final Blow",value=f"[{final_blow_name}](https://zkillboard.com/character/{final_blow_id})", inline=True)
+
+                    embed.set_thumbnail(url=f"https://images.evetech.net/types/{ship_type_id}/render?size=128")
+
+                    for channel_id in data["channels"]:
+                        channel = bot.get_channel(channel_id)
+                        if channel:
+                            await channel.send(embed=embed)
+
             data["last_kill"] = new_kills[0]["killmail_id"]
             persistence.save_data(STATIC_FILE, ZKILL_DATA)
 
-            # Preparación de datos y creación del embed
-            for kill in reversed(new_kills):
-                km_id = kill["killmail_id"]
-                km_hash = kill["zkb"]["hash"]
-                esi_url = f"https://esi.evetech.net/latest/killmails/{km_id}/{km_hash}/"
-                async with session.get(esi_url) as esi_resp:
-                    if esi_resp.status != 200:
-                        continue
-                    km_data = await esi_resp.json()
-
-                victim = km_data["victim"]
-                ship_type_id = victim["ship_type_id"]
-                system_id = km_data["solar_system_id"]
-                character_id = victim.get("character_id")
-                corp_id = victim.get("corporation_id")
-                alliance_id = victim.get("alliance_id")
-                top_damage_id = 0
-                final_blow_id = 0
-                num_attackers = len(km_data["attackers"])
-
-                aux = 0
-                for attacker in km_data["attackers"]:
-                    final_id = attacker.get("character_id",0)
-                    if aux < attacker["damage_done"]:
-                        aux = attacker["damage_done"]
-                        top_damage_id = final_id
-                    if attacker["final_blow"]:
-                        final_blow_id = final_id
-
-                ship_name = await get_type_name(session, ship_type_id)
-                system_name = await get_system_name(session, system_id)
-                pilot_name = await get_character_name(session, character_id)
-                corp_name = await get_corp_name(session, corp_id)
-                alliance_name = await get_alliance_name(session, alliance_id)
-                final_blow_name = ""
-                top_damage_name = ""
-                if top_damage_id != 0 and final_blow_id != 0:
-                    final_blow_name = await get_character_name(session, final_blow_id)
-                    top_damage_name = await get_character_name(session, top_damage_id)
-
-                total_value = kill["zkb"].get("totalValue", 0)
-
-                title_embed = f"**{pilot_name}** perdió una **{ship_name}** en {system_name}"
-
-                if pilot_name == "":
-                    title_embed = f"**{corp_name}** perdió una **{ship_name}** en {system_name}"
-
-                embed = discord.Embed(
-                    title=title_embed,
-                    url= f"https://zkillboard.com/kill/{km_id}/",
-                    color=discord.Color.red()
-                )
-                if type_eve_id == 1 and character_id != eve_id:
-                    embed.color = discord.Color.green()
-                elif type_eve_id == 2 and corp_id != eve_id:
-                    embed.color = discord.Color.green()
-                elif type_eve_id == 3 and alliance_id != eve_id:
-                    embed.color = discord.Color.green()
-
-                if corp_name != "":
-                    embed.add_field(name="Corporación", value=f"[{corp_name}](https://zkillboard.com/corporation/{corp_id}/)", inline=True)
-                if alliance_name != "":
-                    embed.add_field(name="Alianza", value=f"[{alliance_name}](https://zkillboard.com/alliance/{alliance_id}/)", inline=True)
-
-                embed.add_field(name="Valor ISK", value=f"{total_value:,.2f} ISK", inline=False)
-                embed.add_field(name="Numero de Participantes", value=f"{num_attackers}", inline=False)
-
-                if top_damage_name != "":
-                    embed.add_field(name="Top Damage",value=f"[{top_damage_name}](https://zkillboard.com/character/{top_damage_id})", inline=True)
-                if final_blow_name != "":
-                    embed.add_field(name="Final Blow",value=f"[{final_blow_name}](https://zkillboard.com/character/{final_blow_id})", inline=True)
-
-                embed.set_thumbnail(url=f"https://images.evetech.net/types/{ship_type_id}/render?size=128")
-
-                for channel_id in data["channels"]:
-                    channel = bot.get_channel(channel_id)
-                    if channel:
-                        await channel.send(embed=embed)
+            
 
 @fetch_kills.before_loop
 async def before_fetch():
