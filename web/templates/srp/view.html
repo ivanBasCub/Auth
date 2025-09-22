@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>Información de SRP - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <h1 class="page-header text-center mb-3 text-light">Información de SRP de la flota</h1>
+        <div>
+            <div class="alert alert-info" role="alert">
+                <div class="text-end">
+                        <b><span style="padding-right:2.5em">Perdidas Totales: {{lost_count}} </span></b>
+                        <b><span style="padding-right:2.5em">Costo Total: {{srp.srp_cost}} ISK</span></b>    
+                </div>
+            </div>
+            <table class="table table-hover table-dark no-footer">
+                <thead>
+                    <tr>
+                        <th class="col">Nombre del Piloto</th>
+                        <th class="col">Enlace Zkill</th>
+                        <th class="col">Tipo</th>
+                        <th class="col">Monto perdida</th>
+                        <th class="col">Costo del SRP</th>
+                        <th class="col">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ship in list_srp_ships %}
+                        <tr>
+                            <td class="col">{{ship.pilot.characterName}}</td>
+                            <td class="col">
+                                <div class="badge bg-info text-dark">
+                                    <a href="https://zkillboard.com/kill/{{ship.zkill_id}}/" class="btn btn-sm" target="_blank">Zkill</a>
+                                </div>
+                            </td>
+                            <td class="col">{{ship.ship_name}}</td>
+                            <td class="col">{{ship.zkill_value}} ISK</td>
+                            <td class="col">{{ship.srp_cost}} ISK</td>
+                            <td class="col">
+                                {% if ship.status == 0 %}
+                                    <div class="badge bg-warning">
+                                        Pendiente
+                                    </div>
+                                {% elif ship.status == 1 %}
+                                    <div class="badge bg-success">
+                                        Aprobado
+                                    </div>
+                                {% elif ship.status == 2 %}
+                                    <div class="badge bg-danger">
+                                        Denegado
+                                    </div>
+                                {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="alert alert-info" role="alert">
+                <div class="text-end">
+                        <b><span style="padding-right:2.5em">Perdidas Totales: {{lost_count}} </span></b>
+                        <b><span style="padding-right:2.5em">Costo Total: {{srp.srp_cost}} ISK</span></b>    
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

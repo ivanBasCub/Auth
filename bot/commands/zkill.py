@@ -11,7 +11,6 @@ ZKILL_DATA = {}
 
 @bot.event
 async def on_ready():
-    global ZKILL_DATA 
     ZKILL_DATA = persistence.load_data(STATIC_FILE)
     if ZKILL_DATA != {}:
         fetch_kills.start()
@@ -19,7 +18,6 @@ async def on_ready():
 
 @bot.command()
 async def zkill(ctx, eve_id: int, type: int):
-    global ZKILL_DATA 
     await ctx.message.delete()
     ZKILL_DATA = persistence.load_data(STATIC_FILE)
 
@@ -49,7 +47,6 @@ async def zkill(ctx, eve_id: int, type: int):
 # Parar el loop
 @bot.command()
 async def stopzkill(ctx, eve_id: str):
-    global ZKILL_DATA
     await ctx.message.delete()
     ZKILL_DATA = persistence.load_data(STATIC_FILE)
 
@@ -66,55 +63,51 @@ async def stopzkill(ctx, eve_id: str):
 # Task
 @tasks.loop(minutes=1)
 async def fetch_kills():
-    global ZKILL_DATA
-    try:
-        async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
 
-            ZKILL_DATA = persistence.load_data(STATIC_FILE)
+        ZKILL_DATA = persistence.load_data(STATIC_FILE)
 
-            for eve_id, data in list(ZKILL_DATA.items()):
-                eve_id = int(eve_id)
-                type_eve_id = data["type"]
-                kills = []
-                # Configuración de la URL
-                if type_eve_id == 1:
-                    zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/characterID/{eve_id}/"
-                    zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/characterID/{eve_id}/"
-                elif type_eve_id == 2:
-                    zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/corporationID/{eve_id}/"
-                    zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/corporationID/{eve_id}/"
-                elif type_eve_id == 3:
-                    zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/allianceID/{eve_id}/"
-                    zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/allianceID/{eve_id}/"
-                
-                # Peticiones Https
-                async with session.get(zkill_kill_url_1, headers={"Accept-Encoding": "gzip"}) as resp:
-                    if resp.status == 200:
-                        data_url = await resp.json()
-                        if isinstance(data_url, list):
-                            kills = data_url
+        for eve_id, data in list(ZKILL_DATA.items()):
+            eve_id = int(eve_id)
+            type_eve_id = data["type"]
+            kills = []
+            # Configuración de la URL
+            if type_eve_id == 1:
+                zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/characterID/{eve_id}/"
+                zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/characterID/{eve_id}/"
+            elif type_eve_id == 2:
+                zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/corporationID/{eve_id}/"
+                zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/corporationID/{eve_id}/"
+            elif type_eve_id == 3:
+                zkill_kill_url_1 = f"{settings.ZKILL_API_URL}/kills/allianceID/{eve_id}/"
+                zkill_kill_url_2 = f"{settings.ZKILL_API_URL}/losses/allianceID/{eve_id}/"
+            
+            # Peticiones Https
+            async with session.get(zkill_kill_url_1, headers={"Accept-Encoding": "gzip"}) as resp:
+                if resp.status == 200:
+                    data_url = await resp.json()
+                    if isinstance(data_url, list):
+                        kills = data_url
 
-                async with session.get(zkill_kill_url_2, headers={"Accept-Encoding": "gzip"}) as resp:
-                    if resp.status == 200:
-                        data_url = await resp.json()
-                        if isinstance(data_url, list):
-                            kills.extend(data_url)
+            async with session.get(zkill_kill_url_2, headers={"Accept-Encoding": "gzip"}) as resp:
+                if resp.status == 200:
+                    data_url = await resp.json()
+                    if isinstance(data_url, list):
+                        kills.extend(data_url)
 
-                if not kills:
-                    continue
+            if not kills:
+                continue
 
-                kills_list = sorted(kills, key=lambda k: k["killmail_id"], reverse=True)
-                new_kills = []
-                for kill in kills_list:
-                    if data["last_kill"] is None or kill["killmail_id"] > data["last_kill"]:
-                        new_kills.append(kill)
+            kills_list = sorted(kills, key=lambda k: k["killmail_id"], reverse=True)
+            new_kills = []
+            for kill in kills_list:
+                if data["last_kill"] is None or kill["killmail_id"] > data["last_kill"]:
+                    new_kills.append(kill)
 
-                if not new_kills:
-                    continue
-                
-                data["last_kill"] = new_kills[0]["killmail_id"]
-                persistence.save_data(STATIC_FILE, ZKILL_DATA)
-
+            if not new_kills:
+                continue
+            
+            if data["last_kill"] is not None:
                 # Preparación de datos y creación del embed
                 for kill in reversed(new_kills):
                     km_id = kill["killmail_id"]
@@ -193,8 +186,11 @@ async def fetch_kills():
                         channel = bot.get_channel(channel_id)
                         if channel:
                             await channel.send(embed=embed)
-    except Exception as e:
-        print(f"[fetch_kills] Error: {e}")
+
+            data["last_kill"] = new_kills[0]["killmail_id"]
+            persistence.save_data(STATIC_FILE, ZKILL_DATA)
+
+            
 
 @fetch_kills.before_loop
 async def before_fetch():

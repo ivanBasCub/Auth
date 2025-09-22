@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
 from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
-from fats.models import Fats, FleetType
-from fats.views import create_fats
+from fats.models import Fats, FleetType, SRP, SRPShips
+from fats.views import create_fats, create_srp_request
 import esi.views as esi_views
 from django.utils import timezone
 from datetime import timedelta
@@ -799,3 +799,96 @@ def del_skill_plan(request, skillplanid):
     checklist = Skillplan_CheckList.objects.filter(Skillplan = sp).delete()
     sp.delete()
     return redirect("/auth/admin/skillplans/")
+
+## SRP
+
+### Index SRP
+@login_required(login_url="/")
+def srp_index(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_srp = SRP.objects.exclude(status = 1).all()
+    total_cost = 0
+    for srp in list_srp:
+        total_cost += srp.srp_cost
+        srp.srp_cost = format_number(srp.srp_cost)
+        srp.pending_requests = SRPShips.objects.filter(srp = srp, status = 0).count()
+
+    total_cost = format_number(total_cost)
+
+    return render(request,"srp/index.html",{
+        "main_pj" : main_pj,
+        "total_cost" : total_cost,
+        "list_srp": list_srp
+    })
+
+### Request SRP
+@login_required(login_url="/")
+def srp_request(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    srp = SRP.objects.get(srp_id = srp_id)
+    
+    if request.method == "POST":
+        zkill_link = request.POST.get("zkill","").strip()
+        if zkill_link != "":
+            zkill_id = zkill_link.strip("/").split("/")[-1]
+            create_srp_request(zkill_id, srp)
+
+            return redirect(f"/auth/srp/{srp_id}/view/")
+
+    return render(request,"srp/request.html",{
+        "main_pj" : main_pj
+    })
+
+### View SRP
+@login_required(login_url="/")
+def srp_view(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    srp = SRP.objects.get(srp_id = srp_id)
+    list_srp_ships = SRPShips.objects.filter(srp = srp).all()
+    lost_count = list_srp_ships.count()
+    
+    srp.srp_cost = format_number(srp.srp_cost)
+    return render(request,"srp/view.html",{
+        "main_pj" : main_pj,
+        "list_srp_ships" : list_srp_ships,
+        "lost_count" : lost_count,
+        "srp" : srp
+    })
+    
+### Admin SRP
+@login_required(login_url="/")
+def srp_admin(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        print("POST recibido:", request.POST)
+        status = 0
+        srp_request_id = 0
+        srp_status = 0
+
+        if "status" in request.POST:
+            status = int(request.POST.get("status",0).strip())
+            srp_request_id = int(request.POST.get("srp_request",0).strip())
+        elif "srp_status" in request.POST:
+            srp_status = int(request.POST.get("srp_status",0).strip())
+        
+        if srp_request_id != 0:
+            srp_request = SRPShips.objects.get(id = srp_request_id)
+            srp_request.status = status
+            srp_request.save()
+
+        if srp_status != 0:
+            srp = SRP.objects.get(srp_id = srp_id)
+            srp.status = srp_status
+            srp.save()
+
+            return redirect("/auth/srp/")
+
+    srp = SRP.objects.get(srp_id = srp_id)
+    list_srp_ships = SRPShips.objects.filter(srp = srp, status = 0).all()
+
+    return render(request,"srp/admin.html",{
+        "main_pj" : main_pj,
+        "list_srp_ships" : list_srp_ships,
+    })
+    

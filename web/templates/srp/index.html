@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>SRP - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="alert alert-info" role="alert">
+            <div class="text-end">
+                <b>Costo Total: {{total_cost}} ISK</b>
+            </div>
+        </div>
+        <table class="table table-dark text-light">
+            <thead>
+                <tr>
+                    <th class="col">Nombre de flota</th>
+                    <th class="col">Hora de flota</th>
+                    <th class="col">Doctrina</th>
+                    <th class="col">FC</th>
+                    <th class="col">Codigo SRP</th>
+                    <th class="col">Costo de la Flota</th>
+                    <th class="col">Estado de SRP</th>
+                    <th class="col">Pendiente</th>
+                    <th class="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                {% if list_srp %}
+                    {% for srp in list_srp %}
+                        <tr>
+                            <td class="col">{{srp.fleet.name}}</td>
+                            <td class="col">{{srp.fleet.date}}</td>
+                            <td class="col">{{srp.fleet.doctrine.doctitle}}</td>
+                            <td class="col">
+                                <div class="badge bg-info text-dark">
+                                    {{srp.fleet.characterFC.characterName}}
+                                </div>
+                            </td>
+                            <td class="col">
+                                <div class="badge bg-info">
+                                    <a href="/auth/srp/{{srp.srp_id}}/request/" class="btn btn-sm">{{srp.srp_id}}</a>
+                                </div>
+                            </td>
+                            <td class="col">
+                                {{srp.srp_cost}} ISK
+                            </td>
+                            <td class="col">
+                                <div class="badge bg-warning">
+                                    Pendiente
+                                </div>
+                            </td>
+                            <td class="col">
+                                <div class="badge bg-warning">
+                                    {{srp.pending_requests}}
+                                </div>
+                            </td>
+                            <td class="col">
+                                {% if user|has_group:"MainFC" %}
+                                <a href="/auth/srp/{{srp.srp_id}}/admin/" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                                <a href="/auth/srp/{{srp.srp_id}}/view/" class="btn btn-info btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}

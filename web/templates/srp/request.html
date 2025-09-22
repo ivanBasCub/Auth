@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>Solicitar SRP - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <h1 class="page-header text-center mb-3 text-light">Crear solicitud de SRP</h1>
+        <div class="card card-primary border-0 bg-dark text-light">
+            <div class="card-header">
+                <div class="card-title mb-0">
+                    Tu solicitud de SRP
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" class="d-flex justify-content-center">
+                    <div class="col-md-6">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="zkill">Enlace <a href="https://zkillboard.com/" target="_blank"  class="link">zkillboard</a></label>
+                            <input type="text" name="zkill" id="zkill" placeholder="Enlace zkillboard" required class="form-control"/>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">Crear solicitud de SRP</button>
+                        </div>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

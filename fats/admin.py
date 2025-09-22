@@ -3,3 +3,5 @@ import fats.models as models
 # Register your models here.
 admin.site.register(models.FleetType)
 admin.site.register(models.Fats)
+admin.site.register(models.SRP)
+admin.site.register(models.SRPShips)
