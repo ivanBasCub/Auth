@@ -71,4 +71,7 @@ urlpatterns = [
     path('auth/srp/<str:srp_id>/view/', web_views.srp_view, name="srp-index"),
     path('auth/srp/<str:srp_id>/request/', web_views.srp_request, name="srp-index"),
     path('auth/srp/<str:srp_id>/admin/', web_views.srp_admin, name="srp-index"),
+    # Recruitment
+    path('auth/recruitment/', web_views.recruitment, name="recruitment"),
+    path('auth/recruitment/admin/<int:candidate_id>/', web_views.edit_candidate_note, name="recruitment-admin"),
 ]

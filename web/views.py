@@ -12,6 +12,7 @@ from django.contrib.auth.models import User, Group
 import groups.views as groups_views
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
+from recruitment.models import Candidate
 
 # ADDITIONAL FUNCTIONS
 def format_number(n):
@@ -892,3 +893,58 @@ def srp_admin(request, srp_id):
         "list_srp_ships" : list_srp_ships,
     })
     
+# RECRUITMENT
+## Recruitment page
+@login_required(login_url="/")
+def recruitment(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        candidate_id = int(request.POST.get("candidate_id",0).strip())
+        candidate = Candidate.objects.get(id = candidate_id)
+        print(candidate_id)
+        high_sec_group = Group.objects.get(name = "High-Sec")
+        null_sec_group = Group.objects.get(name = "Null-Sec")
+
+        candidate.user.groups.remove(high_sec_group)
+        candidate.user.groups.add(null_sec_group)
+        candidate.user.save()
+        candidate.delete()
+
+    list_candidates = Candidate.objects.all()
+    skill_plan = Skillplan.objects.get(name = "01 - Guardia Imperial")
+
+    for candidate in list_candidates:
+        character = EveCharater.objects.filter(user_character = candidate.user).first()
+        skill_check = Skillplan_CheckList.objects.filter(
+            Skillplan = skill_plan,
+            character__characterId = character.characterId
+        ).first()
+
+        if skill_check:
+            candidate.skill_check = skill_check.status
+        else:
+            candidate.skill_check = False
+
+    return render(request, "recruitment/index.html",{
+        "main_pj" : main_pj,
+        "list_candidates" : list_candidates
+    })
+
+### Edit Candidate Note
+@login_required(login_url="/")
+def edit_candidate_note(request, candidate_id):
+    candidate = Candidate.objects.get(id = candidate_id)
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        note = request.POST.get("notes","").strip()
+        candidate.notes = note
+        candidate.save()
+
+        return redirect("/auth/recruitment/")
+    else:
+        return render(request, "recruitment/admin.html",{
+            "main_pj" : main_pj,
+            "candidate" : candidate
+        })
