@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block style %}
     <title>Reclutamiento - Lista de Pollos</title>
@@ -13,55 +14,70 @@
                     <div class="card-title mb-0">Lista de Pollos</div>
                 </div>
                 <div class="card-body">
-                    <table class="table table-dark table-hover no-footer">
-                        <thead>
-                            <tr>
-                                <th class="col">Nombre</th>
-                                <th class="col">Fecha de ingreso</th>
-                                <th class="col">Skill Plan Checker</th>
-                                <th class="col">Notas</th>
-                                <th class="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for candidate in list_candidates %}
-                            <tr>
-                                <td class="col">{{candidate.user.username}}</td>
-                                <td class="col">{{candidate.date}}</td>
-                                <td class="col">
-                                    {% if candidate.skill_check %}
-                                        <button type="button" class="btn btn-success btn-sm">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    {% else %}
-                                        <button type="button" class="btn btn-danger btn-sm">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    {% endif %}
-                                </td>
-                                <td class="col">{{candidate.notes}}</td>
-                                <td class="col">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <a href="/auth/recruitment/admin/{{candidate.id}}/" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </a>
-                                        <form method="post">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="candidate_id" value="{{candidate.id}}">
-                                            <button class="btn btn-danger btn-sm">
-                                                Bajar a Null
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                        
+                    <div class="row">
+                        <div class="col-sm-12 col-md-4">
+                            <div class="d-flex justify-content-start align-items-center gap-3">
+                                <label class="d-flex align-items-center gap-2">
+                                    Buscar:
+                                    <input type="search" id="candidateTable_filter" class="form-control form-control-sm"
+                                        placeholder aria-controls="candidateTable" />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row dt-row mb-3">
+                        <div class="col-sm-12">
+                            <table class="table table-dark table-hover no-footer" id="candidateTable">
+                                <thead>
+                                    <tr>
+                                        <th class="col">Nombre</th>
+                                        <th class="col">Fecha de ingreso</th>
+                                        <th class="col">Skill Plan Checker</th>
+                                        <th class="col">Notas</th>
+                                        <th class="col">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for candidate in list_candidates %}
+                                    <tr>
+                                        <td class="col">{{candidate.user.username}}</td>
+                                        <td class="col">{{candidate.date}}</td>
+                                        <td class="col">
+                                            {% if candidate.skill_check %}
+                                                <button type="button" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                        <td class="col">{{candidate.notes}}</td>
+                                        <td class="col">
+                                            <div class="d-flex justify-content-start gap-2">
+                                                <a href="/auth/recruitment/admin/{{candidate.id}}/" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="candidate_id" value="{{candidate.id}}">
+                                                    <button class="btn btn-danger btn-sm">
+                                                        Bajar a Null
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <script src="{% static 'js/recruitment.js' %}"></script>
 </main>
 {% endblock %}

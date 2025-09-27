@@ -100,6 +100,9 @@ def skill_plan_checkers(request):
     main_pj = list_pj.filter(main = True).first()
     skillplan_list = Skillplan.objects.all()
 
+    if main_pj.user_character.groups.filter(name="High-Sec").exists():
+        skillplan_list = Skillplan.objects.filter(name = "01 - Guardia Imperial").all()
+
     for sp in skillplan_list:
         for pj in list_pj:
             pj_skill = pj.skills
@@ -112,7 +115,6 @@ def skill_plan_checkers(request):
             ).first()
 
             if checklist_obj:
-                print(sp.name, " / ", pj.characterName, " / " ,status)
                 checklist_obj.status = status
             else:
                 checklist_obj = Skillplan_CheckList.objects.create(status=status)
@@ -158,7 +160,6 @@ def doctrine(request, doc_id):
         "doctrine" : doctrine,
         "fits" : doctrine_fits
     })
-
 
 #### Doctrine Admin
 @login_required(login_url="/")
@@ -915,6 +916,7 @@ def recruitment(request):
     skill_plan = Skillplan.objects.get(name = "01 - Guardia Imperial")
 
     for candidate in list_candidates:
+        candidate.user.username = candidate.user.username.replace('_',' ')
         character = EveCharater.objects.filter(user_character = candidate.user).first()
         skill_check = Skillplan_CheckList.objects.filter(
             Skillplan = skill_plan,
