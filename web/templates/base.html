@@ -61,6 +61,34 @@
                             {% endif %}
                         </ul>
                     </li>
+                    {% else %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Auditoria</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/auth/audit/">Personajes</a></li>
+                            <li><a class="dropdown-item" href="/auth/audit/skillplans">Comprobar Skill Plans</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Flotas
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/auth/fats/list/">Segimiento de Flotas</a></li>
+                            <li><a class="dropdown-item" href="/auth/srp/">SRP</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Cosas Interesantes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Abyssal_Deadspace">Eve University. Abyssal Deapspace</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
                     {% if user|has_group:"Director" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -73,10 +101,10 @@
                         </ul>
                     </li>
                     {% endif %}
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">test</a>
-                    </li>
+                    {% if user|has_group:"Reclutador" %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/recruitment/">Reclutamiento</a>
+                        </li>
                     {% endif %}
                 </ul>
                 <div class="d-flex">

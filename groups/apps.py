@@ -3,7 +3,7 @@ from django.db.models.signals import post_migrate
 
 def create_initial_groups(sender, **kwargs):
     from django.contrib.auth.models import Group
-    grupos = ["Miembro", "High-Sec", "Null-Sec", "Director", "MainFC", "FC"]
+    grupos = ["Miembro", "High-Sec", "Null-Sec", "Director", "MainFC", "FC", "Reclutador"]
 
     for grupo in grupos:
         Group.objects.get_or_create(name=grupo)
