@@ -7,6 +7,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
 from .models import EveCharater
 from base64 import b64encode
+from recruitment.models import Candidate
 import requests
 from datetime import timedelta
 from django.utils import timezone
@@ -74,7 +75,6 @@ def check_account(request, tokens, user_info):
     if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
         return ban_notice(request)
     if public_data["corporation_id"] not in corp_list and not request.user.is_authenticated:
-        
         return ban_notice(request)
 
     if request.user.is_authenticated:
@@ -154,6 +154,11 @@ def save_eve_character(user, user_info, tokens, expiration):
         elif character.corpId == 98634987:
             group_high = Group.objects.get(name = "High-Sec")
             user.groups.add(group_high)
+            candidate = Candidate.objects.create(
+                user = user,
+                skillplan_checklist = False
+            )
+            candidate.save()
 
     character = esi_views.character_skill_points(character)
 

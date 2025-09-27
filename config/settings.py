@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'ban',
     'fats',
     'groups',
-    'skillplans'
+    'skillplans',
+    'recruitment'
 ]
 
 MIDDLEWARE = [
