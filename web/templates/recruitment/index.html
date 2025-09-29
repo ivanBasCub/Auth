@@ -74,6 +74,17 @@
                             </table>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-6 d-flex justify-content-start">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="csv" value="true">
+                                <button class="btn btn-secondary btn-sm">
+                                    Descargar CSV
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

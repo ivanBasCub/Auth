@@ -7,3 +7,4 @@ DockerFile
 *.pyc
 test.py
 /bot/json/*
+/static/csv/*

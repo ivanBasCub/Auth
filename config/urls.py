@@ -58,9 +58,9 @@ urlpatterns = [
     path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications"),
     # Skillplan
     path('auth/admin/skillplans/', web_views.skill_plan_list, name="list-skillplans"),
-    path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="list-skillplans"),
-    path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="list-skillplans"),
-    path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="list-skillplans"),
+    path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="add-skillplans"),
+    path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="mod-skillplans"),
+    path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="del-skillplans"),
     # Suspicious Transfers
     path('auth/corp/suspiciuos/notifications/',web_views.suspicious_notification_list, name="suspicious list"),
     path('auth/corp/suspiciuos/list/', web_views.suspicious_list, name="list-suspiciuos"),

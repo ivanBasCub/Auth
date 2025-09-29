@@ -13,6 +13,8 @@ import groups.views as groups_views
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
 from recruitment.models import Candidate
+from django.conf import settings
+import os, csv
 
 # ADDITIONAL FUNCTIONS
 def format_number(n):
@@ -41,6 +43,14 @@ def formater(text, items):
 
         return text
 
+def create_csv(data, filename):
+    path = os.path.join(settings.BASE_DIR, "static", "csv", filename)
+    with open(path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
+
+    return path
+    
 
 # INDEX
 def index(request):
@@ -85,7 +95,7 @@ def audit_account(request):
     isk_total = format_number(isk_total)
     skill_points_total = format_number(skill_points_total)
 
-    return render(request, "audit/audit.html",{
+    return render(request, "audit/index.html",{
         "main_pj" : main_pj,
         "list_pjs" : list_pjs,
         "isk" : isk_total,
@@ -125,7 +135,7 @@ def skill_plan_checkers(request):
 
     checklist = Skillplan_CheckList.objects.filter(character__in = list_pj).all()
 
-    return render(request, "audit/skills/skillplan.html",{
+    return render(request, "audit/skills/index.html",{
         "main_pj": main_pj,
         "list_pj": list_pj,
         "checklist" : checklist
@@ -264,7 +274,6 @@ def del_doctrine(request, doctrine_id):
         pass
 
     return redirect("/auth/fittings/admin/")
-
 
 ### DOCTRINES CATEGORIES
 
@@ -480,11 +489,28 @@ def suspicious_notification_list(request):
     pj_suspicious = EveCharater.objects.filter(
         suspiciousnotification__in=notifications
     ).distinct()
-    
+
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "suspicious_transfer" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["PJ","Sospechoso","Cantidad", "Fecha"]]
+            for candidate in notifications:
+                list_data.append(
+                    [
+                        candidate.character.characterName,
+                        candidate.suspicious_Target.suspicious_name,
+                        candidate.amount,
+                        candidate.date.strftime("%Y-%m-%d")
+                    ]
+                )
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+        
     for n in notifications:
         n.amount = format_number(n.amount)
 
-    return render(request, "corp/transactions/notificationlist.html",{
+    return render(request, "corp/transactions/index.html",{
         'main_pj' : main_pj,
         "notifications" : notifications,
         "pj_list": pj_suspicious
@@ -495,10 +521,8 @@ def suspicious_notification_list(request):
 def suspicious_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_susp = Suspicious.objects.all()
-    
-    
 
-    return render(request,"corp/transactions/suspiciouslist.html",{
+    return render(request,"corp/transactions/admin.html",{
         "main_pj" : main_pj,
         "list_susp" : list_susp
     })
@@ -526,7 +550,7 @@ def add_suspicious(request):
 
             return redirect("/auth/corp/suspiciuos/list/")
 
-    return render(request,"corp/transactions/addsuspiciuos.html",{
+    return render(request,"corp/transactions/request.html",{
         "main_pj" : main_pj
     })
 
@@ -548,7 +572,25 @@ def banlist(request):
     banlist = BannedCharacter.objects.all()
     categories = BanCategory.objects.all()
     
-    return render(request, "ban/banlist.html",{
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "ban_list" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["PJ Baneado","Motivo","Categoria", "Autor", "Fecha"]]
+            for candidate in banlist:
+                list_data.append(
+                    [
+                        candidate.character_name,
+                        candidate.reason,
+                        candidate.ban_category.name if candidate.ban_category else "uncategorized",
+                        candidate.banned_by.username.replace('_',' '),
+                        candidate.ban_date.strftime("%Y-%m-%d")
+                    ]
+                )
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+
+    return render(request, "ban/index.html",{
         "main_pj" : main_pj,
         "banlist" : banlist,
         "categories" : categories
@@ -577,7 +619,7 @@ def add_ban(request):
 
         return redirect("/auth/corp/banlist/")
     else:
-        return render(request, "ban/addban.html",{
+        return render(request, "ban/request.html",{
             "main_pj" : main_pj,
             "list_pjs" : list_pjs,
             "categories" : list_categories
@@ -602,7 +644,7 @@ def ban_categories(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     categories = BanCategory.objects.all()
 
-    return render(request, "ban/category/banCategoryList.html",{
+    return render(request, "ban/category/index.html",{
         "main_pj" : main_pj,
         "categories" : categories
     })
@@ -622,7 +664,7 @@ def add_ban_category(request):
         return redirect("/auth/corp/banlist/categories/")
 
     else:
-        return render(request, "ban/category/addBanCategory.html",{
+        return render(request, "ban/category/request.html",{
             "main_pj" : main_pj
         })
     
@@ -649,8 +691,22 @@ def member_list(request):
         member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
         member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
 
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "memberlist" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Main","Lista Negra","Alts"]]
+            for member in members:
+                list_data.append([
+                        member.characterName,
+                        member.ban,
+                        ", ".join(map(lambda alt: alt.characterName, member.alts_list))
+                ])
+                        
+            create_csv(list_data, file_name)
 
-    return render(request, "corp/corpMembersList.html",{
+            return redirect(f"/static/csv/{file_name}")
+
+    return render(request, "corp/index.html",{
         "main_pj" : main_pj,
         "members" : members
     })
@@ -721,7 +777,7 @@ def skill_plan_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_skillplans = Skillplan.objects.all()
 
-    return render(request, "audit/skills/skillplanlist.html",{
+    return render(request, "audit/skills/admin.html",{
         "main_pj" : main_pj,
         "skillplans" : list_skillplans
     })
@@ -863,7 +919,6 @@ def srp_admin(request, srp_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
 
     if request.method == "POST":
-        print("POST recibido:", request.POST)
         status = 0
         srp_request_id = 0
         srp_status = 0
@@ -901,16 +956,29 @@ def recruitment(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
 
     if request.method == "POST":
-        candidate_id = int(request.POST.get("candidate_id",0).strip())
-        candidate = Candidate.objects.get(id = candidate_id)
-        print(candidate_id)
-        high_sec_group = Group.objects.get(name = "High-Sec")
-        null_sec_group = Group.objects.get(name = "Null-Sec")
+        candidate_id = 0
 
-        candidate.user.groups.remove(high_sec_group)
-        candidate.user.groups.add(null_sec_group)
-        candidate.user.save()
-        candidate.delete()
+        if "csv" in request.POST:
+            file_name = "candidates" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_candidates = Candidate.objects.all()
+            list_data = [["Character Name","Application Date","Notes"]]
+            for candidate in list_candidates:
+                list_data.append([candidate.user.username.replace('_',' '), candidate.date.strftime("%Y-%m-%d"), candidate.notes])
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+
+        if "candidate_id" in request.POST:
+            candidate_id = int(request.POST.get("candidate_id",0).strip())
+            candidate = Candidate.objects.get(id = candidate_id)
+            print(candidate_id)
+            high_sec_group = Group.objects.get(name = "High-Sec")
+            null_sec_group = Group.objects.get(name = "Null-Sec")
+
+            candidate.user.groups.remove(high_sec_group)
+            candidate.user.groups.add(null_sec_group)
+            candidate.user.save()
+            candidate.delete()
 
     list_candidates = Candidate.objects.all()
     skill_plan = Skillplan.objects.get(name = "01 - Guardia Imperial")
