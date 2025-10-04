@@ -24,7 +24,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if user|has_group:"Miembro" and user|has_group:"Null-sec" %}
+                    {% if user|has_group:"Miembro" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Auditoria</a>
                         <ul class="dropdown-menu">
@@ -59,24 +59,6 @@
                             {% if user|has_group:"Director" %}
                                 <li><a href="/auth/group/management/requests/" class="dropdown-item">Gestionar Grupos</a></li>
                             {% endif %}
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Auditoria</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/audit/">Personajes</a></li>
-                            <li><a class="dropdown-item" href="/auth/audit/skillplans">Comprobar Skill Plans</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            Flotas
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/fats/list/">Segimiento de Flotas</a></li>
-                            <li><a class="dropdown-item" href="/auth/srp/">SRP</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

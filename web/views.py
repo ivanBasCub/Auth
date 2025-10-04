@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
 from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
-from fats.models import Fats, FleetType, SRP, SRPShips
+from fats.models import Fats, FleetType, SRP, SRPShips, Fats_Character
 from fats.views import create_fats, create_srp_request
 import esi.views as esi_views
 from django.utils import timezone
@@ -340,13 +340,13 @@ def fat_list(request):
 
     list_pj = EveCharater.objects.filter(user_character = request.user).all()
     main_pj = list_pj.filter(main=True).first()
-    fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
-    
+    fats = Fats.objects.filter(date__gte = limit_30_days).order_by('date').all()
+    fat_list = Fats_Character.objects.filter(fat__in = fats, character__in = list_pj).all()
 
     return render(request, "fat/fatlist.html",{
         "main_pj" : main_pj,
         "list_pj" : list_pj,
-        "fats" : fats
+        "fats" : fat_list
     })
 
 #### Create FAT
