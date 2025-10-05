@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+    <title>Solicitudes de Ingreso - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-10">
+            <div class="card card-default mb-3 bg-dark text-light">
+                <div class="card-header">
+                    <div class="card-title mb-0">Solicitudes de acceso al Auth</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-12 col-md-4">
+                            <div class="d-flex justify-content-start align-items-center gap-3">
+                                <label class="d-flex align-items-center gap-2">
+                                    Buscar:
+                                    <input type="search" id="candidateTable_filter" class="form-control form-control-sm"
+                                        placeholder aria-controls="candidateTable" />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row dt-row mb-3">
+                        <div class="col-sm-12">
+                            <table class="table table-dark table-hover no-footer" id="candidateTable">
+                                <thead>
+                                    <tr>
+                                        <th class="col">Nombre</th>
+                                        <th class="col">Fecha de solicitud</th>
+                                        <th class="col">Tipo</th>
+                                        <th class="col">Mensaje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appli in applications %}
+                                    <tr>
+                                        <td class="col">{{appli.user.username}}</td>
+                                        <td class="col">{{appli.date}}</td>
+                                        <td class="col">
+                                            {% if appli.application_type == 1 %}
+                                                Nuevo Recluta
+                                            {% else %}
+                                                Miembro Antiguo
+                                            {% endif %}
+                                        </td>
+                                        <td class="col">{{appli.msg}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/recruitment.js' %}"></script>
+</main>
+{% endblock %}

@@ -24,7 +24,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if user|has_group:"Miembro" and user|has_group:"Null-sec" %}
+                    {% if user|has_group:"Miembro" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Auditoria</a>
                         <ul class="dropdown-menu">
@@ -61,31 +61,25 @@
                             {% endif %}
                         </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Auditoria</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/audit/">Personajes</a></li>
-                            <li><a class="dropdown-item" href="/auth/audit/skillplans">Comprobar Skill Plans</a></li>
-                        </ul>
-                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            Flotas
+                            Wiki
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/fats/list/">Segimiento de Flotas</a></li>
-                            <li><a class="dropdown-item" href="/auth/srp/">SRP</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            Cosas Interesantes
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Abyssal_Deadspace">Eve University. Abyssal Deapspace</a></li>
+                            <li class="dropdown-item"><h6>Exploracion</h6></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Exploration">Bases de Exploración</a></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/List_of_data_and_relic_sites">Lista de Sites</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-item"><h6>Rateo</h6></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Ratting">Bases del Rateo</a></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/NPC_damage_types">Daño de las ratas</a></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Abyssal_Deadspace">Bases de Abyssal Deapspace</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-item"><h6>Otros</h6></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Missions">Misiones</a></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Skills_and_learning">Skills</a></li>
+                            <li><a class="dropdown-item" target="_blank" href="https://wiki.eveuniversity.org/Jump_clones">Jump clones</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -102,8 +96,16 @@
                     </li>
                     {% endif %}
                     {% if user|has_group:"Reclutador" %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/auth/recruitment/">Reclutamiento</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                                Reclutamiento
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/auth/recruitment/requests/" class="dropdown-item">Solicitudes de Ingreso</a></li>
+                               <!-- <li><a href="#" class="dropdown-item">Lista de Nuevos</a></li> -->
+                                <li><a href="/auth/recruitment/fridge/" class="dropdown-item">Congelador</a></li>
+                            </ul>
                         </li>
                     {% endif %}
                 </ul>

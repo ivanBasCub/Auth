@@ -58,9 +58,9 @@ urlpatterns = [
     path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications"),
     # Skillplan
     path('auth/admin/skillplans/', web_views.skill_plan_list, name="list-skillplans"),
-    path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="list-skillplans"),
-    path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="list-skillplans"),
-    path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="list-skillplans"),
+    path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="add-skillplans"),
+    path('auth/admin/skillplans/mod/<int:skillplanid>/', web_views.mod_skill_plan, name="mod-skillplans"),
+    path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="del-skillplans"),
     # Suspicious Transfers
     path('auth/corp/suspiciuos/notifications/',web_views.suspicious_notification_list, name="suspicious list"),
     path('auth/corp/suspiciuos/list/', web_views.suspicious_list, name="list-suspiciuos"),
@@ -72,6 +72,7 @@ urlpatterns = [
     path('auth/srp/<str:srp_id>/request/', web_views.srp_request, name="srp-index"),
     path('auth/srp/<str:srp_id>/admin/', web_views.srp_admin, name="srp-index"),
     # Recruitment
-    path('auth/recruitment/', web_views.recruitment, name="recruitment"),
-    path('auth/recruitment/admin/<int:candidate_id>/', web_views.edit_candidate_note, name="recruitment-admin"),
+    path('auth/recruitment/requests/', web_views.applications_list, name="recruitment"),
+    path('auth/recruitment/ice/request/', web_views.applications_request, name="ice-applications"),
+    path('auth/recruitment/fridge/', web_views.frigde, name="fridgge"),
 ]
