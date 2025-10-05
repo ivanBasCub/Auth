@@ -25,7 +25,7 @@
                     </div>
                     {% if user|has_group:"Reserva Imperial" %}
                     <div class="d-flex">
-                        <a href="" class="btn btn-danger flex-fill m-1">
+                        <a href="/auth/recruitment/ice/request/" class="btn btn-danger flex-fill m-1 {% if disable_btn %} disabled {% endif %} ">
                             Solicitar ingreso
                         </a>
                     </div>

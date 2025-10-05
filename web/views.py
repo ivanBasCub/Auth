@@ -12,7 +12,7 @@ from django.contrib.auth.models import User, Group
 import groups.views as groups_views
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
-from recruitment.models import Candidate
+from recruitment.models import Applications_access
 from django.conf import settings
 import os, csv
 
@@ -69,10 +69,19 @@ def dashboard(request):
     main_pj = list_pjs.filter(main=True).first()
     list_alts = list_pjs.filter(main=False).all()
 
+    application = Applications_access.objects.filter(user = request.user).first()
+
+    if application:
+        disable_btn = True
+    else:
+        disable_btn = False
+
+
     return render(request, "dashboard.html",{
         "main_pj" : main_pj,
         "list_alts" : list_alts,
-        "groups" : request.user.groups.all()
+        "groups" : request.user.groups.all(),
+        "disable_btn" : disable_btn
     })
 
 ## AUDIT
@@ -109,9 +118,6 @@ def skill_plan_checkers(request):
     list_pj = EveCharater.objects.filter(user_character = request.user).all()
     main_pj = list_pj.filter(main = True).first()
     skillplan_list = Skillplan.objects.all()
-
-    if main_pj.user_character.groups.filter(name="High-Sec").exists():
-        skillplan_list = Skillplan.objects.filter(name = "01 - Guardia Imperial").all()
 
     for sp in skillplan_list:
         for pj in list_pj:
@@ -494,13 +500,13 @@ def suspicious_notification_list(request):
         if "csv" in request.POST:
             file_name = "suspicious_transfer" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
             list_data = [["PJ","Sospechoso","Cantidad", "Fecha"]]
-            for candidate in notifications:
+            for nt in notifications:
                 list_data.append(
                     [
-                        candidate.character.characterName,
-                        candidate.suspicious_Target.suspicious_name,
-                        candidate.amount,
-                        candidate.date.strftime("%Y-%m-%d")
+                        nt.character.characterName,
+                        nt.suspicious_Target.suspicious_name,
+                        nt.amount,
+                        nt.date.strftime("%Y-%m-%d")
                     ]
                 )
             create_csv(list_data, file_name)
@@ -576,14 +582,14 @@ def banlist(request):
         if "csv" in request.POST:
             file_name = "ban_list" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
             list_data = [["PJ Baneado","Motivo","Categoria", "Autor", "Fecha"]]
-            for candidate in banlist:
+            for ban in banlist:
                 list_data.append(
                     [
-                        candidate.character_name,
-                        candidate.reason,
-                        candidate.ban_category.name if candidate.ban_category else "uncategorized",
-                        candidate.banned_by.username.replace('_',' '),
-                        candidate.ban_date.strftime("%Y-%m-%d")
+                        ban.character_name,
+                        ban.reason,
+                        ban.ban_category.name if ban.ban_category else "uncategorized",
+                        ban.banned_by.username.replace('_',' '),
+                        ban.ban_date.strftime("%Y-%m-%d")
                     ]
                 )
             create_csv(list_data, file_name)
@@ -717,7 +723,7 @@ def member_list(request):
 @login_required(login_url="/")
 def group_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    groups = Group.objects.exclude(name__in= ["Miembro","High-Sec"]).all()
+    groups = Group.objects.exclude(name__in= ["Miembro","Reserva Imperial"]).all()
     notification_list = GroupNotifications.objects.filter(user = request.user).all()
 
     if request.method == "POST":
@@ -950,71 +956,69 @@ def srp_admin(request, srp_id):
     })
     
 # RECRUITMENT
-## Recruitment page
+## List of Access applications
 @login_required(login_url="/")
-def recruitment(request):
+def applications_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_applications = Applications_access.objects.all()
 
-    if request.method == "POST":
-        candidate_id = 0
-
-        if "csv" in request.POST:
-            file_name = "candidates" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
-            list_candidates = Candidate.objects.all()
-            list_data = [["Character Name","Application Date","Notes"]]
-            for candidate in list_candidates:
-                list_data.append([candidate.user.username.replace('_',' '), candidate.date.strftime("%Y-%m-%d"), candidate.notes])
-            create_csv(list_data, file_name)
-
-            return redirect(f"/static/csv/{file_name}")
-
-        if "candidate_id" in request.POST:
-            candidate_id = int(request.POST.get("candidate_id",0).strip())
-            candidate = Candidate.objects.get(id = candidate_id)
-            print(candidate_id)
-            high_sec_group = Group.objects.get(name = "High-Sec")
-            null_sec_group = Group.objects.get(name = "Null-Sec")
-
-            candidate.user.groups.remove(high_sec_group)
-            candidate.user.groups.add(null_sec_group)
-            candidate.user.save()
-            candidate.delete()
-
-    list_candidates = Candidate.objects.all()
-    skill_plan = Skillplan.objects.get(name = "01 - Guardia Imperial")
-
-    for candidate in list_candidates:
-        candidate.user.username = candidate.user.username.replace('_',' ')
-        character = EveCharater.objects.filter(user_character = candidate.user).first()
-        skill_check = Skillplan_CheckList.objects.filter(
-            Skillplan = skill_plan,
-            character__characterId = character.characterId
-        ).first()
-
-        if skill_check:
-            candidate.skill_check = skill_check.status
-        else:
-            candidate.skill_check = False
-
-    return render(request, "recruitment/index.html",{
+    return render(request, "recruitment/applications/index.html",{
         "main_pj" : main_pj,
-        "list_candidates" : list_candidates
+        "applications": list_applications
     })
 
-### Edit Candidate Note
+## Request of old players
 @login_required(login_url="/")
-def edit_candidate_note(request, candidate_id):
-    candidate = Candidate.objects.get(id = candidate_id)
+def applications_request(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
 
     if request.method == "POST":
-        note = request.POST.get("notes","").strip()
-        candidate.notes = note
-        candidate.save()
+        msg = request.POST.get("msg",0).strip()
+        try:
+            application = Applications_access.objects.create(
+                user = request.user,
+                msg = msg,
+                application_type = 2
+            )
+            application.save()
 
-        return redirect("/auth/recruitment/")
-    else:
-        return render(request, "recruitment/admin.html",{
-            "main_pj" : main_pj,
-            "candidate" : candidate
-        })
+            return render(request, "recruitment/applications/request.html",{
+                "main_pj" : main_pj,
+                "mostrar_modal" : True,
+                "modal_status" : 1
+            })
+        except Exception as e:
+            return render(request, "recruitment/applications/request.html",{
+                "main_pj" : main_pj,
+                "mostrar_modal" : True,
+                "modal_status" : 2,
+                "code_error": type(e).__name__,
+            })
+
+
+    return render(request, "recruitment/applications/request.html",{
+        "main_pj" : main_pj,
+    })
+
+
+### Fridge
+@login_required(login_url="/")
+def frigde(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_mains = User.objects.filter(groups__name = "Miembro").all()
+    list_mains = list_mains.exclude(username = "Adjutora_Helgast").all()
+
+    if request.method == "POST":
+        user_id = int(request.POST.get("user_id",0).strip())
+
+        if user_id != 0:
+            user = User.objects.get(id=user_id)
+            user.groups.clear()
+            ice_group = Group.objects.get(name = "Reserva Imperial")
+            user.groups.add(ice_group)
+            user.save()
+
+    return render(request, "recruitment/fridge/index.html",{
+        "main_pj" : main_pj,
+        "list_main" : list_mains
+    })

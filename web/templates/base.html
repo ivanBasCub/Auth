@@ -96,8 +96,16 @@
                     </li>
                     {% endif %}
                     {% if user|has_group:"Reclutador" %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/auth/recruitment/">Reclutamiento</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                                Reclutamiento
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/auth/recruitment/requests/" class="dropdown-item">Solicitudes de Ingreso</a></li>
+                               <!-- <li><a href="#" class="dropdown-item">Lista de Nuevos</a></li> -->
+                                <li><a href="/auth/recruitment/fridge/" class="dropdown-item">Congelador</a></li>
+                            </ul>
                         </li>
                     {% endif %}
                 </ul>

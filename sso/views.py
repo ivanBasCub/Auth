@@ -7,12 +7,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
 from .models import EveCharater
 from base64 import b64encode
-from recruitment.models import Candidate
 import requests
 from datetime import timedelta
 from django.utils import timezone
 import esi.views as esi_views
 import ban.models as ban_models
+from recruitment.models import Applications_access
 import secrets
 
 # Funcion para llamar hacer el login con la web de Eve
@@ -190,12 +190,24 @@ def refresh_token(character):
         character = esi_views.character_corp_alliance_info(character)
         character = esi_views.character_wallet_money(character)
         character = esi_views.character_skill_points(character)
-        
+        user = character.user_character
+
         if character.main == True and character.corpId != 98628176:
-            user = character.user_character
-            user.groups.clear()
-            user.save()
+            if user.groups.filter(name="Reserva Imperial").exists():
+                user.groups.clear()
+                ice_group = Group.objects.get(name = "Reserva Imperial")
+                user.groups.add(ice_group)
+            else:
+                user.groups.clear()
+        
+        if character.main == True and character.corpId == 98628176:
+            group_member = Group.objects.get(name="Miembro")
+            user.groups.add(group_member)
+
+        user.save()
         character.save()
+
+        application = Applications_access.filter(user = user).delete()
 
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")
