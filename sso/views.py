@@ -134,6 +134,11 @@ def save_eve_character(user, user_info, tokens, expiration):
         member_group = Group.objects.get(name = "Miembro")
         user.groups.add(member_group)
         user.save()
+    else:
+        Applications_access.objects.create(
+            user = user,
+            application_type = 1
+        ).save()
 
     character = esi_views.character_wallet_money(character)
 
@@ -201,13 +206,15 @@ def refresh_token(character):
                 user.groups.clear()
         
         if character.main == True and character.corpId == 98628176:
-            group_member = Group.objects.get(name="Miembro")
-            user.groups.add(group_member)
+            if not user.groups.filter(name="Reserva Imperial").exists():
+                group_member = Group.objects.get(name="Miembro")
+                user.groups.add(group_member)
+            else:
+                Applications_access.filter(user = user).delete()
 
         user.save()
         character.save()
-
-        application = Applications_access.filter(user = user).delete()
+        
 
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")
