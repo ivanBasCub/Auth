@@ -64,6 +64,12 @@
                 </div>
             </div>
         </div>
+        <div class="row d-flex justify-content-start">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="csv" value="1" class="btn btn-secondary">Descargar CSV</button>
+            </form>
+        </div>
     </div>
 </main>
 <script src="{% static 'js/banlist.js' %}"></script>

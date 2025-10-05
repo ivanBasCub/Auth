@@ -11,15 +11,18 @@ class FleetType(models.Model):
 class Fats(models.Model):
     name = models.CharField(max_length=200, default="")
     characterFC = models.ForeignKey(EveCharater, on_delete=models.DO_NOTHING, related_name="fats_characterFC")
-    character = models.ForeignKey(EveCharater, on_delete=models.DO_NOTHING, related_name="fats_character")
     fleetType = models.ForeignKey(FleetType, on_delete=models.DO_NOTHING, related_name="fats_fleetType")
     doctrine = models.ForeignKey(Doctrine, on_delete=models.DO_NOTHING, related_name="fats_doctrine")
-    solarSystem = models.CharField(max_length=200)
-    ship = models.CharField(max_length=200)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name} - {self.characterFC.name} - {self.date}"
+    
+class Fats_Character(models.Model):
+    fat = models.ForeignKey(Fats, on_delete=models.DO_NOTHING, related_name="fat")
+    character = models.ForeignKey(EveCharater, on_delete=models.DO_NOTHING, related_name="player_character")
+    ship = models.CharField(max_length=200)
+    solarSystem = models.CharField(max_length=200)
 
 class SRP(models.Model):
     srp_id = models.CharField(max_length=10, default="", unique=True)

@@ -47,15 +47,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for fat in fats %}
+                            {% for ft in fats %}
                             <tr>
-                                <td>{{ fat.name }}</td>
-                                <td>{{ fat.fleetType.name }}</td>
-                                <td>{{ fat.doctrine.doctitle }}</td>
-                                <td>{{ fat.ship }}</td>
-                                <td>{{ fat.solarSystem }}</td>
-                                <td>{{ fat.character.characterName }}</td>
-                                <td>{{ fat.date }}</td>
+                                <td>{{ ft.fat.name }}</td>
+                                <td>{{ ft.fat.fleetType.name }}</td>
+                                <td>{{ ft.fat.doctrine.doctitle }}</td>
+                                <td>{{ ft.ship }}</td>
+                                <td>{{ ft.solarSystem }}</td>
+                                <td>{{ ft.character.characterName }}</td>
+                                <td>{{ ft.fat.date }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

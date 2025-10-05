@@ -3,7 +3,7 @@ from django.conf import settings
 from sso.models import EveCharater
 from esi.views import item_name, solar_system_name
 from doctrines.models import Doctrine
-from .models import Fats, FleetType, SRP, SRPShips
+from .models import Fats, FleetType, SRP, SRPShips, Fats_Character
 import requests
 import random
 import string
@@ -35,31 +35,41 @@ def create_fats(characterId, doctrineId, fleetTypeId, fleetName):
             response = requests.get(f'{settings.EVE_ESI_API_URL}/fleets/{data_fc["fleet_id"]}/members', headers= headers)
             
             if response.status_code == 200:
-                data_members = response.json()
-                for member in data_members:
-                    fat = Fats.objects.create(
-                        name = fleetName,
-                        characterFC = character,
-                        character = EveCharater.objects.get(characterId = member["character_id"]),
-                        fleetType = fleetType,
-                        doctrine = doctrine,
-                        solarSystem = solar_system_name(member["solar_system_id"]),
-                        ship = item_name(member["ship_type_id"])
-                    )
-                    fat.save()
+                # Creación de Fat
+                fat = Fats.objects.create(
+                    name = fleetName,
+                    characterFC = character,
+                    fleetType = fleetType,
+                    doctrine = doctrine,
+                )
+                fat.save()
 
-                    if fat.character == character:
-                        srp_id = create_srp_id()
-                        new_srp = SRP.objects.create(
-                            srp_id = srp_id,
-                            status = 0,
-                            srp_cost = 0,
-                            fleet = fat
+                # Creación de SRP
+                srp_id = create_srp_id()
+                new_srp = SRP.objects.create(
+                    srp_id = srp_id,
+                    status = 0,
+                    srp_cost = 0,
+                    fleet = fat
+                )
+                new_srp.save()
+
+                data_members = response.json()
+                print(data_members)
+                for member in data_members:
+                    character = EveCharater.objects.get(characterId = member["character_id"])
+
+                    if character:
+                        fat_user = Fats_Character.objects.create(
+                            fat = fat,
+                            character = character,
+                            ship = item_name(member["ship_type_id"]),
+                            solarSystem = solar_system_name(member["solar_system_id"])
                         )
 
-                        new_srp.save()
+                        fat_user.save()
 
-
+    
 def create_srp_request(zkill_id, srp):
 
     # URL = https://zkillboard.com/api/kills/killID/129938002/

@@ -7,12 +7,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
 from .models import EveCharater
 from base64 import b64encode
-from recruitment.models import Candidate
 import requests
 from datetime import timedelta
 from django.utils import timezone
 import esi.views as esi_views
 import ban.models as ban_models
+from recruitment.models import Applications_access
 import secrets
 
 # Funcion para llamar hacer el login con la web de Eve
@@ -59,22 +59,9 @@ def eve_callback(request):
 
 # Funciones para comprobar las cuentas
 def check_account(request, tokens, user_info):
-    headers = {
-        "Accept-Language": "",
-        "If-None-Match": "",
-        "X-Compatibility-Date": "2025-08-26",
-        "X-Tenant": "",
-        "Accept": "application/json"
-    }
-
-    res = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{user_info['CharacterID']}")
-    public_data = res.json()
     
-    corp_list = [98634987, 98628176]
     # Comprobar si el personaje esta baneado
     if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
-        return ban_notice(request)
-    if public_data["corporation_id"] not in corp_list and not request.user.is_authenticated:
         return ban_notice(request)
 
     if request.user.is_authenticated:
@@ -118,10 +105,8 @@ def update_create_user(request, tokens, user_info):
             return redirect("../../")
         
         member_group = Group.objects.get_or_create(name = "Miembro")
-        member_group = Group.objects.get(name = "Miembro")
         user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
         user.set_password(random_password)
-        user.groups.add(member_group)
         user.save()
 
         save_eve_character(user, user_info, tokens, expiration)
@@ -144,21 +129,16 @@ def save_eve_character(user, user_info, tokens, expiration):
         )
     
     character = esi_views.character_corp_alliance_info(character)
+    
+    if character.corpId == 98628176:
+        member_group = Group.objects.get(name = "Miembro")
+        user.groups.add(member_group)
+        user.save()
+
     character = esi_views.character_wallet_money(character)
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId == 98628176:
-            group_null = Group.objects.get(name = "Null-Sec")
-            user.groups.add(group_null)
-        elif character.corpId == 98634987:
-            group_high = Group.objects.get(name = "High-Sec")
-            user.groups.add(group_high)
-            candidate = Candidate.objects.create(
-                user = user,
-                skillplan_checklist = False
-            )
-            candidate.save()
 
     character = esi_views.character_skill_points(character)
 
@@ -210,7 +190,24 @@ def refresh_token(character):
         character = esi_views.character_corp_alliance_info(character)
         character = esi_views.character_wallet_money(character)
         character = esi_views.character_skill_points(character)
+        user = character.user_character
+
+        if character.main == True and character.corpId != 98628176:
+            if user.groups.filter(name="Reserva Imperial").exists():
+                user.groups.clear()
+                ice_group = Group.objects.get(name = "Reserva Imperial")
+                user.groups.add(ice_group)
+            else:
+                user.groups.clear()
+        
+        if character.main == True and character.corpId == 98628176:
+            group_member = Group.objects.get(name="Miembro")
+            user.groups.add(group_member)
+
+        user.save()
         character.save()
+
+        application = Applications_access.filter(user = user).delete()
 
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")

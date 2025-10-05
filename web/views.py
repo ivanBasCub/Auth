@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
 from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
-from fats.models import Fats, FleetType, SRP, SRPShips
+from fats.models import Fats, FleetType, SRP, SRPShips, Fats_Character
 from fats.views import create_fats, create_srp_request
 import esi.views as esi_views
 from django.utils import timezone
@@ -12,7 +12,9 @@ from django.contrib.auth.models import User, Group
 import groups.views as groups_views
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
-from recruitment.models import Candidate
+from recruitment.models import Applications_access
+from django.conf import settings
+import os, csv
 
 # ADDITIONAL FUNCTIONS
 def format_number(n):
@@ -41,6 +43,14 @@ def formater(text, items):
 
         return text
 
+def create_csv(data, filename):
+    path = os.path.join(settings.BASE_DIR, "static", "csv", filename)
+    with open(path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
+
+    return path
+    
 
 # INDEX
 def index(request):
@@ -59,10 +69,19 @@ def dashboard(request):
     main_pj = list_pjs.filter(main=True).first()
     list_alts = list_pjs.filter(main=False).all()
 
+    application = Applications_access.objects.filter(user = request.user).first()
+
+    if application:
+        disable_btn = True
+    else:
+        disable_btn = False
+
+
     return render(request, "dashboard.html",{
         "main_pj" : main_pj,
         "list_alts" : list_alts,
-        "groups" : request.user.groups.all()
+        "groups" : request.user.groups.all(),
+        "disable_btn" : disable_btn
     })
 
 ## AUDIT
@@ -85,7 +104,7 @@ def audit_account(request):
     isk_total = format_number(isk_total)
     skill_points_total = format_number(skill_points_total)
 
-    return render(request, "audit/audit.html",{
+    return render(request, "audit/index.html",{
         "main_pj" : main_pj,
         "list_pjs" : list_pjs,
         "isk" : isk_total,
@@ -99,9 +118,6 @@ def skill_plan_checkers(request):
     list_pj = EveCharater.objects.filter(user_character = request.user).all()
     main_pj = list_pj.filter(main = True).first()
     skillplan_list = Skillplan.objects.all()
-
-    if main_pj.user_character.groups.filter(name="High-Sec").exists():
-        skillplan_list = Skillplan.objects.filter(name = "01 - Guardia Imperial").all()
 
     for sp in skillplan_list:
         for pj in list_pj:
@@ -125,7 +141,7 @@ def skill_plan_checkers(request):
 
     checklist = Skillplan_CheckList.objects.filter(character__in = list_pj).all()
 
-    return render(request, "audit/skills/skillplan.html",{
+    return render(request, "audit/skills/index.html",{
         "main_pj": main_pj,
         "list_pj": list_pj,
         "checklist" : checklist
@@ -265,7 +281,6 @@ def del_doctrine(request, doctrine_id):
 
     return redirect("/auth/fittings/admin/")
 
-
 ### DOCTRINES CATEGORIES
 
 #### Add Doctrine category
@@ -331,13 +346,13 @@ def fat_list(request):
 
     list_pj = EveCharater.objects.filter(user_character = request.user).all()
     main_pj = list_pj.filter(main=True).first()
-    fats = Fats.objects.filter(character__in = list_pj, date__gte = limit_30_days).order_by('date').all()
-    
+    fats = Fats.objects.filter(date__gte = limit_30_days).order_by('date').all()
+    fat_list = Fats_Character.objects.filter(fat__in = fats, character__in = list_pj).all()
 
     return render(request, "fat/fatlist.html",{
         "main_pj" : main_pj,
         "list_pj" : list_pj,
-        "fats" : fats
+        "fats" : fat_list
     })
 
 #### Create FAT
@@ -480,11 +495,28 @@ def suspicious_notification_list(request):
     pj_suspicious = EveCharater.objects.filter(
         suspiciousnotification__in=notifications
     ).distinct()
-    
+
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "suspicious_transfer" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["PJ","Sospechoso","Cantidad", "Fecha"]]
+            for nt in notifications:
+                list_data.append(
+                    [
+                        nt.character.characterName,
+                        nt.suspicious_Target.suspicious_name,
+                        nt.amount,
+                        nt.date.strftime("%Y-%m-%d")
+                    ]
+                )
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+        
     for n in notifications:
         n.amount = format_number(n.amount)
 
-    return render(request, "corp/transactions/notificationlist.html",{
+    return render(request, "corp/transactions/index.html",{
         'main_pj' : main_pj,
         "notifications" : notifications,
         "pj_list": pj_suspicious
@@ -495,10 +527,8 @@ def suspicious_notification_list(request):
 def suspicious_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_susp = Suspicious.objects.all()
-    
-    
 
-    return render(request,"corp/transactions/suspiciouslist.html",{
+    return render(request,"corp/transactions/admin.html",{
         "main_pj" : main_pj,
         "list_susp" : list_susp
     })
@@ -526,7 +556,7 @@ def add_suspicious(request):
 
             return redirect("/auth/corp/suspiciuos/list/")
 
-    return render(request,"corp/transactions/addsuspiciuos.html",{
+    return render(request,"corp/transactions/request.html",{
         "main_pj" : main_pj
     })
 
@@ -548,7 +578,25 @@ def banlist(request):
     banlist = BannedCharacter.objects.all()
     categories = BanCategory.objects.all()
     
-    return render(request, "ban/banlist.html",{
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "ban_list" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["PJ Baneado","Motivo","Categoria", "Autor", "Fecha"]]
+            for ban in banlist:
+                list_data.append(
+                    [
+                        ban.character_name,
+                        ban.reason,
+                        ban.ban_category.name if ban.ban_category else "uncategorized",
+                        ban.banned_by.username.replace('_',' '),
+                        ban.ban_date.strftime("%Y-%m-%d")
+                    ]
+                )
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+
+    return render(request, "ban/index.html",{
         "main_pj" : main_pj,
         "banlist" : banlist,
         "categories" : categories
@@ -577,7 +625,7 @@ def add_ban(request):
 
         return redirect("/auth/corp/banlist/")
     else:
-        return render(request, "ban/addban.html",{
+        return render(request, "ban/request.html",{
             "main_pj" : main_pj,
             "list_pjs" : list_pjs,
             "categories" : list_categories
@@ -602,7 +650,7 @@ def ban_categories(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     categories = BanCategory.objects.all()
 
-    return render(request, "ban/category/banCategoryList.html",{
+    return render(request, "ban/category/index.html",{
         "main_pj" : main_pj,
         "categories" : categories
     })
@@ -622,7 +670,7 @@ def add_ban_category(request):
         return redirect("/auth/corp/banlist/categories/")
 
     else:
-        return render(request, "ban/category/addBanCategory.html",{
+        return render(request, "ban/category/request.html",{
             "main_pj" : main_pj
         })
     
@@ -649,8 +697,22 @@ def member_list(request):
         member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
         member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
 
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "memberlist" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Main","Lista Negra","Alts"]]
+            for member in members:
+                list_data.append([
+                        member.characterName,
+                        member.ban,
+                        ", ".join(map(lambda alt: alt.characterName, member.alts_list))
+                ])
+                        
+            create_csv(list_data, file_name)
 
-    return render(request, "corp/corpMembersList.html",{
+            return redirect(f"/static/csv/{file_name}")
+
+    return render(request, "corp/index.html",{
         "main_pj" : main_pj,
         "members" : members
     })
@@ -661,7 +723,7 @@ def member_list(request):
 @login_required(login_url="/")
 def group_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    groups = Group.objects.exclude(name__in= ["Miembro","High-Sec"]).all()
+    groups = Group.objects.exclude(name__in= ["Miembro","Reserva Imperial"]).all()
     notification_list = GroupNotifications.objects.filter(user = request.user).all()
 
     if request.method == "POST":
@@ -721,7 +783,7 @@ def skill_plan_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_skillplans = Skillplan.objects.all()
 
-    return render(request, "audit/skills/skillplanlist.html",{
+    return render(request, "audit/skills/admin.html",{
         "main_pj" : main_pj,
         "skillplans" : list_skillplans
     })
@@ -863,7 +925,6 @@ def srp_admin(request, srp_id):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
 
     if request.method == "POST":
-        print("POST recibido:", request.POST)
         status = 0
         srp_request_id = 0
         srp_status = 0
@@ -895,58 +956,69 @@ def srp_admin(request, srp_id):
     })
     
 # RECRUITMENT
-## Recruitment page
+## List of Access applications
 @login_required(login_url="/")
-def recruitment(request):
+def applications_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_applications = Applications_access.objects.all()
 
-    if request.method == "POST":
-        candidate_id = int(request.POST.get("candidate_id",0).strip())
-        candidate = Candidate.objects.get(id = candidate_id)
-        print(candidate_id)
-        high_sec_group = Group.objects.get(name = "High-Sec")
-        null_sec_group = Group.objects.get(name = "Null-Sec")
-
-        candidate.user.groups.remove(high_sec_group)
-        candidate.user.groups.add(null_sec_group)
-        candidate.user.save()
-        candidate.delete()
-
-    list_candidates = Candidate.objects.all()
-    skill_plan = Skillplan.objects.get(name = "01 - Guardia Imperial")
-
-    for candidate in list_candidates:
-        candidate.user.username = candidate.user.username.replace('_',' ')
-        character = EveCharater.objects.filter(user_character = candidate.user).first()
-        skill_check = Skillplan_CheckList.objects.filter(
-            Skillplan = skill_plan,
-            character__characterId = character.characterId
-        ).first()
-
-        if skill_check:
-            candidate.skill_check = skill_check.status
-        else:
-            candidate.skill_check = False
-
-    return render(request, "recruitment/index.html",{
+    return render(request, "recruitment/applications/index.html",{
         "main_pj" : main_pj,
-        "list_candidates" : list_candidates
+        "applications": list_applications
     })
 
-### Edit Candidate Note
+## Request of old players
 @login_required(login_url="/")
-def edit_candidate_note(request, candidate_id):
-    candidate = Candidate.objects.get(id = candidate_id)
+def applications_request(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
 
     if request.method == "POST":
-        note = request.POST.get("notes","").strip()
-        candidate.notes = note
-        candidate.save()
+        msg = request.POST.get("msg",0).strip()
+        try:
+            application = Applications_access.objects.create(
+                user = request.user,
+                msg = msg,
+                application_type = 2
+            )
+            application.save()
 
-        return redirect("/auth/recruitment/")
-    else:
-        return render(request, "recruitment/admin.html",{
-            "main_pj" : main_pj,
-            "candidate" : candidate
-        })
+            return render(request, "recruitment/applications/request.html",{
+                "main_pj" : main_pj,
+                "mostrar_modal" : True,
+                "modal_status" : 1
+            })
+        except Exception as e:
+            return render(request, "recruitment/applications/request.html",{
+                "main_pj" : main_pj,
+                "mostrar_modal" : True,
+                "modal_status" : 2,
+                "code_error": type(e).__name__,
+            })
+
+
+    return render(request, "recruitment/applications/request.html",{
+        "main_pj" : main_pj,
+    })
+
+
+### Fridge
+@login_required(login_url="/")
+def frigde(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_mains = User.objects.filter(groups__name = "Miembro").all()
+    list_mains = list_mains.exclude(username = "Adjutora_Helgast").all()
+
+    if request.method == "POST":
+        user_id = int(request.POST.get("user_id",0).strip())
+
+        if user_id != 0:
+            user = User.objects.get(id=user_id)
+            user.groups.clear()
+            ice_group = Group.objects.get(name = "Reserva Imperial")
+            user.groups.add(ice_group)
+            user.save()
+
+    return render(request, "recruitment/fridge/index.html",{
+        "main_pj" : main_pj,
+        "list_main" : list_mains
+    })
