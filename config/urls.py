@@ -26,6 +26,7 @@ urlpatterns = [
     path('sso/callback/', sso_views.eve_callback, name='eve_callback'),
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
     path('auth/dashboard/', web_views.dashboard, name="dashboard"),
+    path("auth/characters/main/", web_views.change_main, name="change-main"),
     # Character Audit
     path('auth/audit/', web_views.audit_account, name="audit"),
     path('auth/audit/skillplans/', web_views.skill_plan_checkers, name="skill_checker"),
