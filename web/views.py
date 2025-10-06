@@ -84,6 +84,34 @@ def dashboard(request):
         "disable_btn" : disable_btn
     })
 
+## CHANGE MAIN
+@login_required(login_url='/')
+def change_main(request):
+    
+    if request.method == "POST":
+        token_id = int(request.POST.get("token",0))
+
+        if token_id != 0:
+            new_main = EveCharater.objects.get(id = token_id)
+            main_pj = EveCharater.objects.filter(user_character = request.user, main = True).first()
+            main_pj.main = False
+            main_pj.save()
+            new_main.main = True
+            new_main.save()
+
+            request.user.username = new_main.characterName.replace(" ","_")
+            request.user.save()
+
+            return redirect("/auth/dashboard")
+
+    list_pjs = EveCharater.objects.filter(user_character = request.user).all()
+    main_pj = list_pjs.filter(main=True).first()
+
+    return render(request, "audit/main.html",{
+        "main_pj": main_pj,
+        "characters" : list_pjs
+    })
+
 ## AUDIT
 
 ### Eve Characters List
