@@ -134,16 +134,17 @@ def save_eve_character(user, user_info, tokens, expiration):
         member_group = Group.objects.get(name = "Miembro")
         user.groups.add(member_group)
         user.save()
-    else:
-        Applications_access.objects.create(
-            user = user,
-            application_type = 1
-        ).save()
+    
 
     character = esi_views.character_wallet_money(character)
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
+        if character.corpId != 98628176:
+            Applications_access.objects.create(
+                user = user,
+                application_type = 1
+            ).save()
 
     character = esi_views.character_skill_points(character)
 
