@@ -210,7 +210,7 @@ def refresh_token(character):
                 group_member = Group.objects.get(name="Miembro")
                 user.groups.add(group_member)
             else:
-                Applications_access.filter(user = user).delete()
+                Applications_access.objects.filter(user = user).delete()
 
         user.save()
         character.save()
