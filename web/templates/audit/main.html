@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block style %}
+<title>Cambiar Main - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        <div class="row">
+            <div class="container-fluid col-12 mb-4">
+                <h3 class="text-light text-center">Seleccionar un personaje</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1 col-md-12 container">
+                <div class="d-flex flex-warp justify-content-center">
+                    {% for char in characters %}
+                    <div class="card text-white bg-secondary m-2 mw-50">
+                        <div class="card-header text-center">
+                            {{char.characterName}}
+                        </div>
+                        <div class="card-body text-center">
+                            <img class="rounded" src="https://images.evetech.net/characters/{{char.characterId}}/portrait?size=256">
+                        </div>
+                        <div class="card-footer">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="token" value="{{char.id}}">
+                                <button class="btn btn-success w-100">Seleccionar</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
