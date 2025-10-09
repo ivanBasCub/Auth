@@ -1,0 +1,87 @@
+{% extends 'corp/reports/base_reports.html' %}
+{% load filters %}
+{% load static %}
+
+{% block style %}
+<title>SkillPlans Report - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        {% if user|has_group:"Director" %}
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+                <img src="https://images.evetech.net/corporations/98628176/logo?size=128" class="rounded">
+            </div>
+            <div class="text-light">
+                <div>
+                    <h2>Helgast Militarum</h2>
+                    <h3>Main SkillPlans Report</h3>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+            <table class="table table-hover table-dark" id="table_main">
+                <thead>
+                    <tr>
+                        <th class="col text-center">Main</th>
+                        {% for sp in skillplans %}
+                        <th class="col text-center">{{sp.name}}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th class="col">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="search" name="main" id="filter_main"
+                                    class="form-control text-light bg-dark" placeholder="Buscar">
+                            </form>
+                        </th>
+                        {% for sp in skillplans %}
+                        <th class="col"></th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for main in main_list %}
+                    <tr>
+                        <td class="text-center" style="vertical-align: middle;">{{main.characterName}}</td>
+                        
+                        {% for sp_check in main.skillplanCheck.all %}
+                        <td class="text-center" style="vertical-align: middle;">
+                            {% if sp_check.status %}
+                            <button class="btn btn-sm btn-success">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-danger">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script src="{% static 'js/filter_reports.js' %}"></script>
+</main>
+{% endblock %}

@@ -8,9 +8,9 @@ class Skillplan(models.Model):
     skills = models.JSONField(default=dict)
 
 class Skillplan_CheckList(models.Model):
-    Skillplan = models.ManyToManyField(Skillplan, related_name="skillplan_name")
+    skillPlan = models.ManyToManyField(Skillplan, related_name="skillplan_name")
     character = models.ManyToManyField(EveCharater, related_name="character_skillplan")
     status = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.Skillplan.all().first().name} for {self.character.all().first().characterName} - Status: {self.status}"
+        return f"{self.skillPlan.all().first().name} for {self.character.all().first().characterName} - Status: {self.status}"

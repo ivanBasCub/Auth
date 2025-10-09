@@ -154,7 +154,7 @@ def skill_plan_checkers(request):
             status = check_skill(pj_skill, sp_skills)
             
             checklist_obj = Skillplan_CheckList.objects.filter(
-                Skillplan = sp,
+                skillPlan = sp,
                 character = pj
             ).first()
 
@@ -162,7 +162,7 @@ def skill_plan_checkers(request):
                 checklist_obj.status = status
             else:
                 checklist_obj = Skillplan_CheckList.objects.create(status=status)
-                checklist_obj.Skillplan.add(sp)
+                checklist_obj.skillPlan.add(sp)
                 checklist_obj.character.add(pj)
 
             checklist_obj.save()
@@ -597,6 +597,118 @@ def del_suspicious(request,susp_id):
 
     return redirect("/auth/corp/suspiciuos/list/")
 
+### REPORTS
+
+#### Member list
+@login_required(login_url="/")
+def report_members(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    members = EveCharater.objects.filter(main= True).all()
+    
+    for member in members:
+        user = User.objects.get(username = member.characterName.replace(' ','_'))
+        member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
+        for alt in member.alts_list:
+            member.walletMoney += alt.walletMoney
+        member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
+
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "memberlist" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Main","Lista Negra","Alts", "Skill Points", "Total ISK"]]
+            for member in members:
+                list_data.append([
+                        member.characterName,
+                        member.ban,
+                        "/ ".join(map(lambda alt: alt.characterName, member.alts_list)),
+                        member.totalSkillPoints,
+                        member.walletMoney
+                        
+                ])
+                        
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+
+    for member in members: 
+        member.walletMoney = format_number(member.walletMoney)
+        member.totalSkillPoints = format_number(member.totalSkillPoints)
+
+    return render(request, "corp/reports/members.html",{
+        "main_pj" : main_pj,
+        "members" : members
+    })
+
+#### fats report
+@login_required(login_url="/")
+def fats_reports(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    user_list = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
+    three_months = timezone.now() - timedelta(days=90)
+    fats = Fats_Character.objects.filter(fat__date__gte = three_months).all()
+
+    for user in user_list:
+        user_fats = fats.filter(character__user_character = user).all()
+        user.totalFats = user_fats.count()
+        user.cta = user_fats.filter(fat__fleetType__name = "CTA").count()
+        user.stratop = user_fats.filter(fat__fleetType__name = "Strat-Op").count()
+        user.hd = user_fats.filter(fat__fleetType__name = "Home Defense").count()
+        user.roam = user_fats.filter(fat__fleetType__name = "Roam").count()
+
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "fats_reports" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Main","Total Fats","CTA", "Strat-Op", "Home Defense", "Roam"]]
+            for user in user_list:
+                list_data.append([
+                    user.username,
+                    user.totalFats,
+                    user.cta,
+                    user.stratop,
+                    user.hd,
+                    user.roam
+                ])
+                        
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+    
+    return render(request, "corp/reports/fats.html",{
+        "main_pj" : main_pj,
+        "user_list": user_list
+    })
+
+#### Skillplan Checker
+@login_required(login_url="/")
+def skillplan_reports(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    skillplans = Skillplan.objects.filter(name__in = ["Guardia Imperial","Vanguardia","Legionario","Primaris","Campeon del capitulo","Ultramarine","DeathWacth","Magic 14"]).all()
+    corp_members = User.objects.filter(groups__name = "Miembro")
+    main_list = EveCharater.objects.filter(main = True, user_character__in=corp_members).all()
+
+    for main in main_list:
+        main.skillplanCheck = Skillplan_CheckList.objects.filter(character = main,skillPlan__in = skillplans).all().order_by("skillPlan")
+
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "skillplan" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Main","Guardia Imperial","Vanguardia","Legionario","Primaris","Campeon del capitulo","Ultramarine","DeathWacth","Magic 14"]]
+            for main in main_list:
+                data = [main.characterName]
+                for sp in main.skillplanCheck:
+                    data.append(sp.status)
+                list_data.append(data)
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+
+
+    return render(request, "corp/reports/skill_plans.html",{
+        "main_pj" : main_pj,
+        "skillplans" : skillplans,
+        "main_list": main_list
+    })
+
 ### BANS
 
 #### Ban list
@@ -714,36 +826,8 @@ def del_ban_category(request, category_id):
 
     return redirect("/auth/corp/banlist/categories/")
 
-### MEMBER LIST
-@login_required(login_url="/")
-def member_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    members = EveCharater.objects.filter(main= True).all()
-    
-    for member in members:
-        user = User.objects.get(username = member.characterName.replace(' ','_'))
-        member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
-        member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
 
-    if request.method == "POST":
-        if "csv" in request.POST:
-            file_name = "memberlist" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
-            list_data = [["Main","Lista Negra","Alts"]]
-            for member in members:
-                list_data.append([
-                        member.characterName,
-                        member.ban,
-                        ", ".join(map(lambda alt: alt.characterName, member.alts_list))
-                ])
-                        
-            create_csv(list_data, file_name)
 
-            return redirect(f"/static/csv/{file_name}")
-
-    return render(request, "corp/index.html",{
-        "main_pj" : main_pj,
-        "members" : members
-    })
 
 ## GROUPS
 
@@ -862,22 +946,25 @@ def mod_skill_plan(request, skillplanid):
         desc = request.POST.get("desc","").strip()
         skills = request.POST.get("skills","").strip()
 
-        skills_dict = {}
-        for linea in skills.strip().splitlines():
-            if linea.strip():
-                *nombre, nivel = linea.strip().split()
-                nombre_skill = " ".join(nombre)
-                nivel = int(nivel)
-                # Si ya existe, guardamos el nivel más alto
-                if nombre_skill in skills_dict:
-                    skills_dict[nombre_skill] = max(skills_dict[nombre_skill], nivel)
-                else:
-                    skills_dict[nombre_skill] = nivel
-
+        if skills != "":
+            skills_dict = {}
+            for linea in skills.strip().splitlines():
+                if linea.strip():
+                    *nombre, nivel = linea.strip().split()
+                    nombre_skill = " ".join(nombre)
+                    nivel = int(nivel)
+                    # Si ya existe, guardamos el nivel más alto
+                    if nombre_skill in skills_dict:
+                        skills_dict[nombre_skill] = max(skills_dict[nombre_skill], nivel)
+                    else:
+                        skills_dict[nombre_skill] = nivel
+            sp.skills = skills_dict
+        
         sp.name = name
         sp.desc = desc
-        sp.skills = skills
         sp.save()
+
+        return redirect("/auth/admin/skillplans/")
 
     return render(request, "audit/skills/modskillplan.html",{
         "main_pj" : main_pj,
@@ -888,7 +975,7 @@ def mod_skill_plan(request, skillplanid):
 @login_required(login_url="/")
 def del_skill_plan(request, skillplanid):
     sp = Skillplan.objects.get(id = skillplanid)
-    checklist = Skillplan_CheckList.objects.filter(Skillplan = sp).delete()
+    checklist = Skillplan_CheckList.objects.filter(skillPlan = sp).delete()
     sp.delete()
     return redirect("/auth/admin/skillplans/")
 

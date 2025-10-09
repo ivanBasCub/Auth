@@ -56,7 +56,7 @@
                             <div class="m-2">
                                 <div role="group" class="btn-group">
                                     <button type="button" class="btn btn-sm btn-success">
-                                        {% for sp in check.Skillplan.all %}
+                                        {% for sp in check.skillPlan.all %}
                                             {{sp.name}}
                                         {% endfor %}
                                     </button>
@@ -67,7 +67,7 @@
                             <div class="m-2">
                                 <div role="group" class="btn-group">
                                     <button type="button" class="btn btn-sm btn-danger">
-                                        {% for sp in check.Skillplan.all %}
+                                        {% for sp in check.skillPlan.all %}
                                             {{sp.name}}
                                         {% endfor %}
                                     </button>

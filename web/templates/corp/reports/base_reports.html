@@ -95,7 +95,7 @@
                         </ul>
                     </li>
                     {% endif %}
-                    {% if user|has_group:"Reclutador" or user|has_group:"Director" %}
+                    {% if user|has_group:"Reclutador" or user|has_group:"Director"  %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
@@ -108,6 +108,16 @@
                             </ul>
                         </li>
                     {% endif %}
+                    <li class="nav-right nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Reportes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/auth/corp/reports/show/1/" class="dropdown-item">Lista de Miembros</a></li>
+                            <li><a href="/auth/corp/reports/show/2/" class="dropdown-item">FATS</a></li>
+                            <li><a href="/auth/corp/reports/show/3/" class="dropdown-item">SkillPlan Checker</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <div class="d-flex">
                     <div class="align-self-center text-start">

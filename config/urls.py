@@ -42,18 +42,21 @@ urlpatterns = [
     path('auth/fittings/admin/category/mod/<int:category_id>/', web_views.mod_category, name="mod_category"),
     path('auth/fittings/admin/category/del/<int:category_id>/', web_views.del_category, name="del_category"),
     path('auth/fittings/fit/mod/<int:fit_id>/', web_views.mod_fit, name="mod_fit"),
-    # Zona de administración de corp
+    # CORP
+    ## Zona de administración de corp
     path('auth/corp/banlist/', web_views.banlist, name="banlist"),
     path('auth/corp/ban/add/', web_views.add_ban, name="add_ban"),
     path('auth/corp/ban/del/<int:ban_id>/', web_views.del_ban, name="del_ban"),
     path('auth/corp/banlist/categories/', web_views.ban_categories, name="ban_categories"),
     path('auth/corp/ban/category/add/', web_views.add_ban_category, name="add_ban_category"),
     path('auth/corp/ban/category/del/<int:category_id>/', web_views.del_ban_category, name="del_ban_category"),
+    ## Reports
+    path('auth/corp/reports/show/1/', web_views.report_members, name="member_report"),
+    path('auth/corp/reports/show/2/', web_views.fats_reports, name="fats_report"),
+    path('auth/corp/reports/show/3/', web_views.skillplan_reports, name="fats_report"),
     # Zona de Fats
     path('auth/fats/list/', web_views.fat_list, name="fat_list"),
     path('auth/fats/add/', web_views.add_fat, name="add_fat"),
-    # Corp members
-    path('auth/corp/memberlist/', web_views.member_list, name="memberlist"),
     # Groups
     path('auth/groups/', web_views.group_list, name="group-list"),
     path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications"),

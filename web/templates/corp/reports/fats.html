@@ -1,0 +1,115 @@
+{% extends 'corp/reports/base_reports.html' %}
+{% load filters %}
+{% load static %}
+
+{% block style %}
+<title>Fats Report - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        {% if user|has_group:"Director" %}
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+                <img src="https://images.evetech.net/corporations/98628176/logo?size=128" class="rounded">
+            </div>
+            <div class="text-light">
+                <div>
+                    <h2>Helgast Militarum</h2>
+                    <h3>Fats Report (90 Days)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+            <table class="table table-hover table-dark" id="table_main">
+                <thead>
+                    <tr>
+                        <th class="col text-center">Main</th>
+                        <th class="col text-center" onclick="ordenarTabla(1)">Total Fats</th>
+                        <th class="col text-center" onclick="ordenarTabla(2)">CTA Fats</th>
+                        <th class="col text-center" onclick="ordenarTabla(3)">Strat-Op Fats</th>
+                        <th class="col text-center" onclick="ordenarTabla(4)">Home Defence Fats</th>
+                        <th class="col text-center" onclick="ordenarTabla(5)">Roam Fats</th>
+                    </tr>
+                    <tr>
+                        <th class="col">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="search" name="main" id="filter_main"
+                                    class="form-control text-light bg-dark" placeholder="Buscar">
+                            </form>
+                        </th>
+                        <th class="col"></th>
+                        <th class="col"></th>
+                        <th class="col"></th>
+                        <th class="col"></th>
+                        <th class="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user_list %}
+                    <tr>
+                        <td class="text-center" style="vertical-align: middle;">{{ user.username }}
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">
+                            {{user.totalFats}}
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">{{user.cta}}</td>
+                        <td class="text-center" style="vertical-align: middle;">{{user.stratop}}</td>
+                        <td class="text-center" style="vertical-align: middle;">{{user.hd}}</td>
+                        <td class="text-center" style="vertical-align: middle;">{{user.roam}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script src="{% static 'js/filter_reports.js' %}"></script>
+    <script>
+        let ordenAscendente = true;
+
+        function ordenarTabla(columna) {
+            const tabla = document.getElementById("table_main");
+            const filas = Array.from(tabla.tBodies[0].rows);
+
+            filas.sort((a, b) => {
+                const valorA = a.cells[columna].textContent.trim();
+                const valorB = b.cells[columna].textContent.trim();
+
+                // Detectar si es número o texto
+                const esNumero = !isNaN(valorA) && !isNaN(valorB);
+                if (esNumero) {
+                    return ordenAscendente ? valorA - valorB : valorB - valorA;
+                } else {
+                    return ordenAscendente
+                        ? valorA.localeCompare(valorB)
+                        : valorB.localeCompare(valorA);
+                }
+            });
+
+            // Reordenar las filas en el DOM
+            filas.forEach(fila => tabla.tBodies[0].appendChild(fila));
+
+            // Alternar orden para la próxima vez
+            ordenAscendente = !ordenAscendente;
+        }
+
+    </script>
+</main>
+{% endblock %}
