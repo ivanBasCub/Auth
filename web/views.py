@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
-from ban.models import BannedCharacter, BanCategory, Suspicious, SuspiciousNotification
+from ban.models import BannedCharacter, BanCategory, SuspiciousNotification
 from fats.models import Fats, FleetType, SRP, SRPShips, Fats_Character
 from fats.views import create_fats, create_srp_request
 import esi.views as esi_views
@@ -518,8 +518,11 @@ def mod_fit(request, fit_id):
 #### View Suspicious Notification list
 @login_required(login_url="/")
 def suspicious_notification_list(request):
+    limit_30_days = timezone.now() - timedelta(days=30)
+
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    notifications = SuspiciousNotification.objects.all()
+    notifications = SuspiciousNotification.objects.filter(date__gte = limit_30_days).all()
+    SuspiciousNotification.objects.filter(date__lt=limit_30_days).delete()
     pj_suspicious = EveCharater.objects.filter(
         suspiciousnotification__in=notifications
     ).distinct()
@@ -532,7 +535,7 @@ def suspicious_notification_list(request):
                 list_data.append(
                     [
                         nt.character.characterName,
-                        nt.suspicious_Target.suspicious_name,
+                        nt.target,
                         nt.amount,
                         nt.date.strftime("%Y-%m-%d")
                     ]
@@ -549,53 +552,6 @@ def suspicious_notification_list(request):
         "notifications" : notifications,
         "pj_list": pj_suspicious
     })
-
-#### View Suspiciuos List
-@login_required(login_url="/")
-def suspicious_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    list_susp = Suspicious.objects.all()
-
-    return render(request,"corp/transactions/admin.html",{
-        "main_pj" : main_pj,
-        "list_susp" : list_susp
-    })
-
-#### Add Suspiciuos
-@login_required(login_url="/")
-def add_suspicious(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-
-    if request.method == "POST":
-        suspicious_id = int(request.POST.get("suspicious_id",0).strip())
-        suspicious_type = int(request.POST.get("suspicious_type",0).strip())
-        
-
-        if suspicious_type != 0 and suspicious_id != 0:
-            new_suspicious = Suspicious.objects.create(
-                suspicious_id = suspicious_id,
-                suspicious_type = suspicious_type
-            )
-
-            print(suspicious_type)
-            new_suspicious.suspicious_name = esi_views.suspicious_name(suspicious_id,suspicious_type)
-
-            new_suspicious.save()
-
-            return redirect("/auth/corp/suspiciuos/list/")
-
-    return render(request,"corp/transactions/request.html",{
-        "main_pj" : main_pj
-    })
-
-#### Del Suspiciuos
-@login_required(login_url="/")
-def del_suspicious(request,susp_id):
-    susp = Suspicious.objects.get(id = susp_id)
-
-    susp.delete()
-
-    return redirect("/auth/corp/suspiciuos/list/")
 
 ### REPORTS
 

@@ -14,10 +14,7 @@
             <div class="card card-default bg-dark text-light">
                 <div class="card-header">
                     <div class="card-title mb-0">
-                        Lista de movimientos sospechosos
-                        <div class="float-end">
-                            <a href="/auth/corp/suspiciuos/list/" class="btn btn-sm btn-danger">Lista de sospechosos</a>
-                        </div>
+                        Lista de movimientos sospechosos (30 días)
                     </div>
                 </div>
                 <div class="card-body">
@@ -55,7 +52,7 @@
                                         <tr>
                                             <td>{{ noti.character.characterName }}</td>
                                             <td>{{ noti.character.user_character.username }}</td>
-                                            <td>{{ noti.suspicious_Target.suspicious_name }}</td>
+                                            <td>{{ noti.target }}</td>
                                             <td>{{noti.date}}</td>
                                             <td>{{noti.amount}}</td>
                                         </tr>

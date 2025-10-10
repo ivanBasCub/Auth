@@ -67,9 +67,6 @@ urlpatterns = [
     path('auth/admin/skillplans/del/<int:skillplanid>/', web_views.del_skill_plan, name="del-skillplans"),
     # Suspicious Transfers
     path('auth/corp/suspiciuos/notifications/',web_views.suspicious_notification_list, name="suspicious list"),
-    path('auth/corp/suspiciuos/list/', web_views.suspicious_list, name="list-suspiciuos"),
-    path('auth/corp/suspiciuos/list/add/', web_views.add_suspicious, name="add-suspiciuos"),
-    path('auth/corp/suspiciuos/list/del/<int:susp_id>/', web_views.del_suspicious, name="delete-suspiciuos"),
     # SRP
     path('auth/srp/', web_views.srp_index, name="srp-index"),
     path('auth/srp/<str:srp_id>/view/', web_views.srp_view, name="srp-index"),

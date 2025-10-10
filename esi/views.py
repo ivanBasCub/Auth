@@ -1,8 +1,9 @@
+import logging
 from django.shortcuts import render
 from django.conf import settings
 from sso.models import EveCharater
 from doctrines.models import FitShip, Categories, Doctrine
-from ban.models import Suspicious, SuspiciousNotification
+from ban.models import SuspiciousNotification
 from datetime import datetime
 import requests
 import json
@@ -293,43 +294,66 @@ def transfers(character):
         "contract_id",
         ""
     ]
-
-    suspiciuos_list = set(Suspicious.objects.all().values_list('suspicious_id', flat=True))
+    
+    character_list = set(EveCharater.objects.all().values_list('characterId',flat=True))
+    corp_list = set(EveCharater.objects.all().filter(corpId__gt = 3000000).values_list('corpId', flat=True))
+    autorice_list = character_list | corp_list
+    autorice_list.add(1000132)
+    autorice_list.add(1639878825)
 
     for transfer in data_transfer:
+        if not isinstance(transfer, dict):
+            logging.warning(f"Elemento {transfer} no es dict: {type(transfer)} - {transfer}")
+            continue
+        
         id_check_1 = transfer.get("first_party_id",0)
         id_check_2 = transfer.get("second_party_id",0)
-
         transfer_type = transfer.get("context_id_type", "")
 
         if transfer_type in type_transfers:
             if transfer["ref_type"] != "daily_goal_payouts":
-                if id_check_1 in suspiciuos_list:
+                if id_check_1 not in autorice_list:
                     create_transfer_notification(character, transfer["first_party_id"], transfer["date"], transfer["amount"])
-                elif id_check_2 in suspiciuos_list:
+                elif id_check_2 not in autorice_list:
                     create_transfer_notification(character, transfer["second_party_id"], transfer["date"], transfer["amount"])
-
-
 
 def create_transfer_notification(character, suspicious_id, date_str, amount):
     dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
     date = dt.date()
+    
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-08-26",
+        "X-Tenant": "",
+        "Accept": "application/json"
+    }
 
-    suspicious = Suspicious.objects.get(suspicious_id=suspicious_id)
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{suspicious_id}", headers= headers)
+    name = ""
+    if response.status_code != 200:
+        response = requests.get(f"{settings.EVE_ESI_API_URL}/corporations/{suspicious_id}", headers= headers)
+        if response.status_code != 200:
+            response = requests.get(f"{settings.EVE_ESI_API_URL}/alliances/{suspicious_id}", headers= headers)
 
+    if response.status_code != 200:
+        logging.warning("El id {suspicious_id} no es de ninguna corporacion, alianza o jugador")
+        
+    name =response.json()["name"]
+   
     if amount < 0:
         amount *= -1
 
     exists = SuspiciousNotification.objects.filter(
         date = date,
         character = character,
-        suspicious_Target = suspicious
+        target = name
     ).exists()
 
     if not exists:
         SuspiciousNotification.objects.create(
             character = character,
-            suspicious_Target = suspicious,
+            target = name,
             date = date,
             amount = amount
         )
