@@ -1,8 +1,8 @@
 venv
 notes.md
 .env
-docker-compose.yml
-DockerFile
+/docker-compose.yml
+/DockerFile
 **/__pycache__/
 *.pyc
 test.py

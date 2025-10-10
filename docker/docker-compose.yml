@@ -1,0 +1,93 @@
+services:
+  rabbit_server:
+    image: rabbitmq:latest
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASS}
+    ports:
+      - ${RABBIT_PORT_1}
+      - ${RABBIT_PORT_2}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mysql_server:
+    image: mysql:latest
+    environment:
+      - MYSQL_DATABASE=${DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_USER_PASS}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
+    ports:
+      - ${MYSQL_PORT}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASS}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  
+  django_server:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
+      - CELERY_RESULT_BACKEND=rpc://
+      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_USER_PASS}@mysql_server:${MYSQL_PORT}/${DATABASE}
+    depends_on:
+      rabbit_server:
+        condition: service_healthy
+      mysql_server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery_worker:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
+      - CELERY_RESULT_BACKEND=rpc://
+      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_USER_PASS}@mysql_server:${MYSQL_PORT}/${DATABASE}
+    depends_on:
+      rabbit_server:
+        condition: service_healthy
+      mysql_server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery_beat:
+    build: .
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
+      - CELERY_RESULT_BACKEND=rpc://
+      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_USER_PASS}@mysql_server:${MYSQL_PORT}/${DATABASE}
+    depends_on:
+      rabbit_server:
+        condition: service_healthy
+      mysql_server:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
