@@ -1032,6 +1032,8 @@ def srp_admin(request, srp_id):
 def applications_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_applications = Applications_access.objects.all()
+    for application in list_applications:
+        application.totalSP = format_number(application.totalSP)
 
     return render(request, "recruitment/applications/index.html",{
         "main_pj" : main_pj,

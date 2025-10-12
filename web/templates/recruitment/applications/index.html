@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block style %}
-    <title>Solicitudes de Ingreso - Helgast Auth</title>
+<title>Solicitudes de Ingreso - Helgast Auth</title>
 {% endblock %}
 
 {% block content %}
@@ -33,6 +33,8 @@
                                         <th class="col">Nombre</th>
                                         <th class="col">Fecha de solicitud</th>
                                         <th class="col">Tipo</th>
+                                        <th class="col">Total SkillsPoints</th>
+                                        <th class="col">Covert Cyno</th>
                                         <th class="col">Mensaje</th>
                                     </tr>
                                 </thead>
@@ -43,9 +45,21 @@
                                         <td class="col">{{appli.date}}</td>
                                         <td class="col">
                                             {% if appli.application_type == 1 %}
-                                                Nuevo Recluta
+                                            Nuevo Recluta
                                             {% else %}
-                                                Miembro Antiguo
+                                            Miembro Antiguo
+                                            {% endif %}
+                                        </td>
+                                        <td class="col">{{appli.totalSP}}</td>
+                                        <td class="col">
+                                            {% if appli.cynoCovert %}
+                                            <button class="btn btn-sm btn-success">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
                                             {% endif %}
                                         </td>
                                         <td class="col">{{appli.msg}}</td>

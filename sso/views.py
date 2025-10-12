@@ -137,16 +137,24 @@ def save_eve_character(user, user_info, tokens, expiration):
     
 
     character = esi_views.character_wallet_money(character)
+    character = esi_views.character_skill_points(character)
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
         if character.corpId != 98628176:
+            state = False
+            if "Cynosural Field Theory" in character.skills:
+                if character.skills["Cynosural Field Theory"] == 5:
+                    state = True
+
             Applications_access.objects.create(
                 user = user,
-                application_type = 1
+                application_type = 1,
+                totalSP = character.totalSkillPoints,
+                cynoCovert = state
             ).save()
 
-    character = esi_views.character_skill_points(character)
+    
 
     character.save()
 
