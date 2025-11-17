@@ -42,16 +42,22 @@
                             </td>
                             <td class="col">
                                 <div class="badge bg-info">
-                                    <a href="/auth/srp/{{srp.srp_id}}/request/" class="btn btn-sm">{{srp.srp_id}}</a>
+                                    <a href="/auth/srp/{{srp.srp_id}}/request/" class="btn btn-sm {% if srp.status != 0 %} disabled {% endif %}">{{srp.srp_id}}</a>
                                 </div>
                             </td>
                             <td class="col">
                                 {{srp.srp_cost}} ISK
                             </td>
                             <td class="col">
+                                {% if srp.status == 0 %}
                                 <div class="badge bg-warning">
                                     Pendiente
                                 </div>
+                                {% else %}
+                                <div class="badge bg-danger">
+                                    Cerrado
+                                </div>
+                                {% endif %}
                             </td>
                             <td class="col">
                                 <div class="badge bg-warning">

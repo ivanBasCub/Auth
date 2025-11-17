@@ -24,7 +24,7 @@
                             <input type="text" name="zkill" id="zkill" placeholder="Enlace zkillboard" required class="form-control"/>
                         </div>
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger">Crear solicitud de SRP</button>
+                            <button type="submit" class="btn btn-danger {% if srp.status != 0 %} disabled {% endif %}">Crear solicitud de SRP</button>
                         </div>
                     </div>
                     
