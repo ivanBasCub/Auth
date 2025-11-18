@@ -23,33 +23,36 @@
             </thead>
             <tbody>
                 {% for ship in list_srp_ships %}
-                    <tr>
-                        <td class="col">{{ship.pilot.characterName}}</td>
-                        <td class="col">
-                            <div class="badge bg-info text-dark">
-                                <a href="https://zkillboard.com/kill/{{ship.zkill_id}}/" class="btn btn-sm" target="_blank">Zkill</a>
-                            </div>
-                        </td>
-                        <td class="col">{{ship.ship_name}}</td>
-                        <td class="col">{{ship.zkill_value}} ISK</td>
-                        <td class="col">{{ship.srp_cost}} ISK</td>
-                        <td class="col">
-                            <div class="d-flex gap-2">
+                <tr>
+                    <td class="col">{{ship.pilot.characterName}}</td>
+                    <td class="col">
+                        <div class="badge bg-info text-dark">
+                            <a href="https://zkillboard.com/kill/{{ship.zkill_id}}/" class="btn btn-sm"
+                                target="_blank">Zkill</a>
+                        </div>
+                    </td>
+                    <td class="col">{{ship.ship_name}}</td>
+                    <td class="col">{{ship.zkill_value}} ISK</td>
+                    <td class="col">{{ship.srp_cost}} ISK</td>
+                    <td class="col">
+                        <div class="d-flex gap-2">
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="srp_request" value="{{ship.id}}">
                                 <input type="hidden" name="status" value="1">
-                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Aprobar</button>
+                                <button type="submit" name="action" value="approve"
+                                    class="btn btn-success btn-sm">Aprobar</button>
                             </form>
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="srp_request" value="{{ship.id}}">
                                 <input type="hidden" name="status" value="2">
-                                <button type="submit" name="action" value="approve" class="btn btn-danger btn-sm">Denegar</button>
+                                <button type="submit" name="action" value="approve"
+                                    class="btn btn-danger btn-sm">Denegar</button>
                             </form>
-                            </div>
-                        </td>
-                    </tr>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -60,10 +63,68 @@
                 <button type="submit" name="action" value="clear" class="btn btn-danger btn-sm">Cerrar SRP</button>
             </form>
         </div>
+        <h1 class="page-header text-center mb-3 text-light">Registro de SRP aceptados y denegados</h1>
+        <table class="table table-hover table-dark no-footer">
+            <thead>
+                <tr>
+                    <th class="col">Nombre del Piloto</th>
+
+                    <th class="col">Enlace Zkill</th>
+                    <th class="col">Estado</th>
+                    <th class="col">Tipo</th>
+                    <th class="col">Monto perdida</th>
+                    <th class="col">Costo del SRP</th>
+                    <th class="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ship in check_srp_list %}
+                <tr>
+                    <td class="col">{{ship.pilot.characterName}}</td>
+                    <td class="col">
+                        <div class="badge bg-info text-dark">
+                            <a href="https://zkillboard.com/kill/{{ship.zkill_id}}/" class="btn btn-sm"
+                                target="_blank">Zkill</a>
+                        </div>
+                    </td>
+                    <td class="col">
+                        {% if ship.status == 1 %}
+                        <div class="badge bg-success">
+                            Aprobado
+                        </div>
+                        {% else %}
+                        <div class="badge bg-danger">
+                            Denegado
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="col">{{ship.ship_name}}</td>
+                    <td class="col">{{ship.zkill_value}} ISK</td>
+                    <td class="col">{{ship.srp_cost}} ISK</td>
+                    <td class="col">
+                        <div class="d-flex gap-2">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="srp_request" value="{{ship.id}}">
+                                {% if ship.status == 1 %}
+                                <input type="hidden" name="status" value="2">
+                                <button type="submit" name="action" value="approve" class="btn btn-danger btn-sm">Denegar</button>
+                                {% else %}
+                                <input type="hidden" name="status" value="1">
+                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Aprobar</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-            <div class="alert alert-danger" role="alert">
-                No tienes permisos para ver esta página.
-            </div>
+        <div class="alert alert-danger" role="alert">
+            No tienes permisos para ver esta página.
+        </div>
         {% endif %}
     </div>
 </main>

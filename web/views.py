@@ -941,7 +941,7 @@ def del_skill_plan(request, skillplanid):
 @login_required(login_url="/")
 def srp_index(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    list_srp = SRP.objects.exclude(status = 1).all()
+    list_srp = SRP.objects.all()
     total_cost = 0
     for srp in list_srp:
         total_cost += srp.srp_cost
@@ -971,7 +971,8 @@ def srp_request(request, srp_id):
             return redirect(f"/auth/srp/{srp_id}/view/")
 
     return render(request,"srp/request.html",{
-        "main_pj" : main_pj
+        "main_pj" : main_pj,
+        "srp" : srp
     })
 
 ### View SRP
@@ -1020,10 +1021,12 @@ def srp_admin(request, srp_id):
 
     srp = SRP.objects.get(srp_id = srp_id)
     list_srp_ships = SRPShips.objects.filter(srp = srp, status = 0).all()
+    check_srp_list = SRPShips.objects.filter(srp = srp).exclude(status = 0).all()
 
     return render(request,"srp/admin.html",{
         "main_pj" : main_pj,
         "list_srp_ships" : list_srp_ships,
+        "check_srp_list" : check_srp_list
     })
     
 # RECRUITMENT
