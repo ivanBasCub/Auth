@@ -15,6 +15,9 @@ import ban.models as ban_models
 from recruitment.models import Applications_access
 import secrets
 
+CORPID = 98628176
+
+
 # Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -130,7 +133,7 @@ def save_eve_character(user, user_info, tokens, expiration):
     
     character = esi_views.character_corp_alliance_info(character)
     
-    if character.corpId == 98628176:
+    if character.corpId == CORPID:
         member_group = Group.objects.get(name = "Miembro")
         user.groups.add(member_group)
         user.save()
@@ -141,7 +144,7 @@ def save_eve_character(user, user_info, tokens, expiration):
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId != 98628176:
+        if character.corpId != CORPID:
             state = False
             if "Cynosural Field Theory" in character.skills:
                 if character.skills["Cynosural Field Theory"] == 5:
@@ -206,7 +209,7 @@ def refresh_token(character):
         character = esi_views.character_skill_points(character)
         user = character.user_character
 
-        if character.main == True and character.corpId != 98628176:
+        if character.main == True and character.corpId != CORPID:
             if user.groups.filter(name="Reserva Imperial").exists():
                 user.groups.clear()
                 ice_group = Group.objects.get(name = "Reserva Imperial")
@@ -214,7 +217,7 @@ def refresh_token(character):
             else:
                 user.groups.clear()
         
-        if character.main == True and character.corpId == 98628176:
+        if character.main == True and character.corpId == CORPID:
             if not user.groups.filter(name="Reserva Imperial").exists():
                 group_member = Group.objects.get(name="Miembro")
                 user.groups.add(group_member)

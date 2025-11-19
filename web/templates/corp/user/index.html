@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load filters %}
+{% load static %}
+
+{% block style %}
+<title>Members List - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3 d-flex justify-content-center">
+        <div class="col-md-6">
+            <div class="card card-default mb-3 bg-dark text-light">
+                {% if user|has_group:"Director" %}
+                <div class="card-header">
+                    <div class="card-title mb-0">Admin Users</div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-hover dataTable no-footer text-center align-middle" id="table_main">
+                        <thead>
+                            <tr>
+                                <th class="col">Cuenta de usario</th>
+                                <th class="col">Grupos</th>
+                                <th class="col">Acciones</th>
+                            </tr>
+                            <tr>
+                                <th class="col">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="search" name="main" id="filter_main"
+                                            class="form-control text-light bg-dark" placeholder="Buscar">
+                                    </form>
+                                </th>
+                                <th class="col"></th>
+                                <th class="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for main in list_main %}
+                            <tr>
+                                <td class="col">{{main.username}}</td>
+                                <td class="col">
+                                    {% for group in main.groups.all %}
+                                    {{group.name}}
+                                    {% endfor %}
+                                </td>
+                                <td class="col">
+                                    <form method="post"
+                                        onsubmit="return confirm('¿Seguro que quieres enviar el formulario?');">
+                                        {% csrf_token %}
+
+                                        <input type="hidden" name="id" value="{{main.id}}">
+                                        <button type="submit" class="btn btn-small btn-danger"><i
+                                                class="bi bi-trash3-fill"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/filter_reports.js' %}"></script>
+</main>
+{% endblock %}

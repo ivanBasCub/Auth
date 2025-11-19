@@ -782,8 +782,31 @@ def del_ban_category(request, category_id):
 
     return redirect("/auth/corp/banlist/categories/")
 
+### USERS
+
+@login_required(login_url="/")
+def user_control_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    
+    if request.method == "POST":
+        user_id = int(request.POST.get("id",0).strip())
+
+        user = User.objects.get(id = user_id)
+
+        if user:
+            EveCharater.objects.filter(user_character = user).delete()
+            Applications_access.objects.filter(user = user).delete()
+            user.delete()
 
 
+    list_mains = User.objects.exclude(username__in = ["Adjutora_Helgast","admin","root"]).all()
+    for main in list_mains:
+        main.username = main.username.replace("_"," ")
+
+    return render(request, "corp/user/index.html",{
+        "main_pj": main_pj,
+        "list_main": list_mains
+    })
 
 ## GROUPS
 
@@ -1030,6 +1053,7 @@ def srp_admin(request, srp_id):
     })
     
 # RECRUITMENT
+
 ## List of Access applications
 @login_required(login_url="/")
 def applications_list(request):
@@ -1075,7 +1099,6 @@ def applications_request(request):
     return render(request, "recruitment/applications/request.html",{
         "main_pj" : main_pj,
     })
-
 
 ### Fridge
 @login_required(login_url="/")

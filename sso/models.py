@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-# Create your models here.
+
 class EveCharater(models.Model):
     characterId = models.BigIntegerField(default=0)
     characterName = models.CharField(max_length=150)
