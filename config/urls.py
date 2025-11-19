@@ -50,6 +50,7 @@ urlpatterns = [
     path('auth/corp/banlist/categories/', web_views.ban_categories, name="ban_categories"),
     path('auth/corp/ban/category/add/', web_views.add_ban_category, name="add_ban_category"),
     path('auth/corp/ban/category/del/<int:category_id>/', web_views.del_ban_category, name="del_ban_category"),
+    path('auth/corp/admin/users/', web_views.user_control_list, name="control-users"),
     ## Reports
     path('auth/corp/reports/show/1/', web_views.report_members, name="member_report"),
     path('auth/corp/reports/show/2/', web_views.fats_reports, name="fats_report"),
