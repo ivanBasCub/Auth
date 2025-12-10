@@ -21,19 +21,24 @@ def character_corp_alliance_info(character):
 
     response_char = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}', headers=headers)
     data = response_char.json()
-
+    print(data)
     if "corporation_id" in data:
         response_corp = requests.get(f'{settings.EVE_ESI_API_URL}/corporations/{data["corporation_id"]}', headers=headers)
         data_corp = response_corp.json()
         character.corpId = data["corporation_id"]
         character.corpName = data_corp["name"]
+    else:
+        character.corpId = 0
+        character.corpName = ""
         
     if "alliance_id" in data:
         response_alliance = requests.get(f'{settings.EVE_ESI_API_URL}/alliances/{data["alliance_id"]}', headers=headers)
         data_alliance = response_alliance.json()
         character.allianceId = data["alliance_id"]
         character.allianceName = data_alliance["name"]
-
+    else:
+        character.allianceId = 0
+        character.allianceName = ""
 
     return character
 
