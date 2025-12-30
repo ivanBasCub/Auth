@@ -1,0 +1,112 @@
+{% extends 'corp/reports/base_reports.html' %}
+{% load filters %}
+{% load static %}
+
+{% block style %}
+<title>Groups Report - Helgast Auth</title>
+{% endblock %}
+
+{% block content %}
+<main class="row flex-nowrap m-0 bg-dark min-vh-100 overflow-auto">
+    <div class="my-3">
+        {% if user|has_group:"Director" %}
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+                <img src="https://images.evetech.net/corporations/98628176/logo?size=128" class="rounded">
+            </div>
+            <div class="text-light">
+                <div>
+                    <h2>Helgast Militarum</h2>
+                    <h3>Groups Report</h3>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+            <table class="table table-hover table-dark" id="table_main">
+                <thead>
+                    <tr>
+                        <th class="col text-center">Group</th>
+                        <th class="col text-center">Number of Mains</th>
+                        <th class="col text-center" onclick="ordenarTabla(1)">List of Mains</th>
+                    </tr>
+                    <tr>
+                        <th class="col">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="search" name="main" id="filter_main"
+                                    class="form-control text-light bg-dark" placeholder="Buscar">
+                            </form>
+                        </th>
+                        <th class="col"></th>
+                        <th class="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                    <tr>
+                        <td>{{group.name}}</td>
+                        {% if group.user_set.all %}
+                        <td class="text-center" style="vertical-align: middle;">{{group.user_set.all|length}}</td>
+                        <td>
+                            {% for user in group.user_set.all %}
+                                {{ user.username }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% else %}
+                        <td class="text-center" style="vertical-align: middle;">0</td>
+                        <td>N/A</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="csv">
+                    <button class="btn active btn-primary">Exportar datos a CSV</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script src="{% static 'js/filter_reports.js' %}"></script>
+    <script>
+        let ordenAscendente = true;
+
+        function ordenarTabla(columna) {
+            const tabla = document.getElementById("table_main");
+            const filas = Array.from(tabla.tBodies[0].rows);
+
+            filas.sort((a, b) => {
+                const valorA = a.cells[columna].textContent.trim();
+                const valorB = b.cells[columna].textContent.trim();
+
+                // Detectar si es número o texto
+                const esNumero = !isNaN(valorA) && !isNaN(valorB);
+                if (esNumero) {
+                    return ordenAscendente ? valorA - valorB : valorB - valorA;
+                } else {
+                    return ordenAscendente
+                        ? valorA.localeCompare(valorB)
+                        : valorB.localeCompare(valorA);
+                }
+            });
+
+            // Reordenar las filas en el DOM
+            filas.forEach(fila => tabla.tBodies[0].appendChild(fila));
+
+            // Alternar orden para la próxima vez
+            ordenAscendente = !ordenAscendente;
+        }
+
+    </script>
+</main>
+{% endblock %}

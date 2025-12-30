@@ -562,7 +562,8 @@ def report_members(request):
     members = EveCharater.objects.filter(main= True).all()
     
     for member in members:
-        user = User.objects.get(username = member.characterName.replace(' ','_'))
+        user = User.objects.prefetch_related('groups').get(username = member.characterName.replace(' ','_'))
+        member.groups = user.groups.all()
         member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
         for alt in member.alts_list:
             member.walletMoney += alt.walletMoney
@@ -571,15 +572,15 @@ def report_members(request):
     if request.method == "POST":
         if "csv" in request.POST:
             file_name = "memberlist" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
-            list_data = [["Main","Lista Negra","Alts", "Skill Points", "Total ISK"]]
+            list_data = [["Main","Groups","Lista Negra","Alts", "Skill Points", "Total ISK"]]
             for member in members:
                 list_data.append([
                         member.characterName,
+                        member.groups, 
                         member.ban,
                         "/ ".join(map(lambda alt: alt.characterName, member.alts_list)),
                         member.totalSkillPoints,
-                        member.walletMoney
-                        
+                        member.walletMoney     
                 ])
                         
             create_csv(list_data, file_name)
@@ -663,6 +664,33 @@ def skillplan_reports(request):
         "main_pj" : main_pj,
         "skillplans" : skillplans,
         "main_list": main_list
+    })
+    
+### Groups Report
+@login_required(login_url="/")
+def groups_report(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    groups = Group.objects.all().prefetch_related('user_set')
+    
+    if request.method == "POST":
+        if "csv" in request.POST:
+            file_name = "groups_report" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
+            list_data = [["Group","Number of Mains","List of Mains"]]
+            for group in groups:
+                mains = [user.username.replace('_',' ') for user in group.user_set.all()]
+                list_data.append([
+                    group.name,
+                    len(mains),
+                    "/ ".join(mains)
+                ])
+                        
+            create_csv(list_data, file_name)
+
+            return redirect(f"/static/csv/{file_name}")
+    
+    return render(request, "corp/reports/groups.html",{
+        "main_pj" : main_pj,
+        "groups": groups
     })
 
 ### BANS

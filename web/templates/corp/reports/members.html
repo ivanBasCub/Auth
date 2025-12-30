@@ -33,6 +33,7 @@
                 <thead>
                     <tr>
                         <th class="col text-center">Main</th>
+                        <th class="col text-center">Groups</th>
                         <th class="col text-center">BlackListed</th>
                         <th class="col text-center">Alts</th>
                         <th class="col text-center">Skills Points</th>
@@ -49,12 +50,20 @@
                         <th class="col"></th>
                         <th class="col"></th>
                         <th class="col"></th>
+                        <th class="col"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for member in members %}
                     <tr>
                         <td class="text-center" style="vertical-align: middle;">{{ member.characterName }}
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">
+                            {% if member.groups.count == 0 %}
+                            N/A
+                            {% else %}
+                            {{ member.groups|join:", " }}
+                            {% endif %}
                         </td>
                         <td class="text-center" style="vertical-align: middle;">
                             {% if member.ban %}

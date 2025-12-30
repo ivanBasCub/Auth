@@ -55,6 +55,7 @@ urlpatterns = [
     path('auth/corp/reports/show/1/', web_views.report_members, name="member_report"),
     path('auth/corp/reports/show/2/', web_views.fats_reports, name="fats_report"),
     path('auth/corp/reports/show/3/', web_views.skillplan_reports, name="fats_report"),
+    path('auth/corp/reports/show/4/', web_views.groups_report, name="groups_report"),
     # Zona de Fats
     path('auth/fats/list/', web_views.fat_list, name="fat_list"),
     path('auth/fats/add/', web_views.add_fat, name="add_fat"),
