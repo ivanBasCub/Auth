@@ -3,7 +3,7 @@ from django.db.models.signals import post_migrate
 
 def create_initial_ban_categories(sender, **kwargs):
     from .models import BanCategory
-    categories = ["RMT", "Multa", "Comportamiento inapropiado", "Spam"]
+    categories = ["RMT", "Multa", "Comportamiento inapropiado", "Spam", "60 días NO Fats", "Black list No actividad"]
 
     for category in categories:
         BanCategory.objects.get_or_create(name=category)
