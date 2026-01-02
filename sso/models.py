@@ -16,6 +16,7 @@ class EveCharater(models.Model):
     skills = models.JSONField(default=dict)
     main = models.BooleanField(default=False)
     user_character = models.ForeignKey(User,on_delete=models.DO_NOTHING, related_name="evepj")
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.characterName} - {self.user_character}"

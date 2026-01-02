@@ -47,7 +47,7 @@ def eve_callback(request):
         'code': code,
         'redirect_uri': settings.CALLBACK_URL,
     }
-    # Funciona
+
     response = requests.post('https://login.eveonline.com/v2/oauth/token', headers=headers, data=data)
     tokens = response.json()
 
@@ -78,7 +78,7 @@ def register_eve_character(request, tokens, user_info):
     expiration = timezone.now() + timedelta(minutes=20)
 
     if check.exists():
-        refresh_eve_character(user_info, tokens, expiration)
+        refresh_eve_character(request.user, user_info, tokens, expiration)
 
         return redirect("../../auth/dashboard/")
     else:
@@ -97,20 +97,21 @@ def update_create_user(request, tokens, user_info):
         user = User.objects.get(username = user_info["CharacterName"].replace(" ","_"))
         user.set_password(random_password)
         user.save()
-        refresh_eve_character(user_info, tokens, expiration)
+        refresh_eve_character(user, user_info, tokens, expiration)
 
         login(request,user)
 
     except User.DoesNotExist:
         check = EveCharater.objects.filter(characterName = user_info["CharacterName"])
 
-        if check.exists():
-            return redirect("../../")
-        
         member_group = Group.objects.get_or_create(name = "Miembro")
         user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
         user.set_password(random_password)
         user.save()
+        
+        if check.exists():
+            refresh_eve_character(user, user_info, tokens, expiration)
+            return redirect("../../auth/dashboard/")
 
         save_eve_character(user, user_info, tokens, expiration)
 
@@ -162,15 +163,25 @@ def save_eve_character(user, user_info, tokens, expiration):
     character.save()
 
 # Funcion para actualizar la información del personaje
-def refresh_eve_character(user_info, tokens, expiration):
+def refresh_eve_character(user, user_info, tokens, expiration):
     character = EveCharater.objects.get(characterName = user_info["CharacterName"])
+    character.user_character = user
     character.accessToken = tokens["access_token"]
     character.refreshToken = tokens["refresh_token"]
     character.expiration = expiration
     character = esi_views.character_corp_alliance_info(character)
     character = esi_views.character_wallet_money(character)
     character = esi_views.character_skill_points(character)
+    if character.deleted == True:
+        character.deleted = False
         
+    if user.username == user_info["CharacterName"].replace(" ","_"):
+        character.main = True
+        if character.corpId == CORPID:
+            member_group = Group.objects.get(name = "Miembro")
+            user.groups.add(member_group)
+            user.save()
+
     character.save()
 
 # Funcion de aviso de ban

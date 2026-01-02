@@ -820,9 +820,15 @@ def user_control_list(request):
         user_id = int(request.POST.get("id",0).strip())
 
         user = User.objects.get(id = user_id)
+        list_pjs = EveCharater.objects.filter(user_character = user).all()
 
         if user:
-            EveCharater.objects.filter(user_character = user).delete()
+            for pj in list_pjs:
+                pj.main = False
+                pj.user_character = User.objects.get(username = "Adjutora_Helgast")
+                pj.deleted = True
+                pj.save()
+            
             Applications_access.objects.filter(user = user).delete()
             user.delete()
 
