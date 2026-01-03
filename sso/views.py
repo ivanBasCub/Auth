@@ -15,7 +15,7 @@ import ban.models as ban_models
 from recruitment.models import Applications_access
 import secrets
 
-CORPID = 98781954
+CORPID = 98628176
 
 
 # Funcion para llamar hacer el login con la web de Eve
