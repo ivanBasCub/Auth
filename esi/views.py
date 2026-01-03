@@ -2,11 +2,18 @@ import logging
 from django.shortcuts import render
 from django.conf import settings
 from sso.models import EveCharater
-from doctrines.models import FitShip, Categories, Doctrine
+from doctrines.models import FitShip
+from skillplans.models import Skillplan, Skillplan_CheckList
 from ban.models import SuspiciousNotification
 from datetime import datetime
 import requests
 import json
+
+def check_skill(pj_skill, skillplan):
+        for skill, nivel in skillplan.items():
+            if skill not in pj_skill or pj_skill[skill] < nivel:
+                return False
+        return True
 
 # Funcion para conseguir informaciónde la corp y la alianza
 def character_corp_alliance_info(character):
@@ -80,7 +87,7 @@ def character_wallet_transactions(character):
     
     return character
 
-# Funcion para conseguir la cantidad de skillpoints de la cuenta
+# Funcion para conseguir la cantidad de skillpoints de la cuenta y las skills
 def character_skill_points(character):
     headers = {
         "Accept-Language": "",
@@ -103,6 +110,27 @@ def character_skill_points(character):
             list_skills[name] = skill["trained_skill_level"]
         character.skills = list_skills
     
+        skillplan_list = Skillplan.objects.all()
+    
+        for sp in skillplan_list:
+            pj_skill = character.skills
+            sp_skills = sp.skills
+            status = check_skill(pj_skill, sp_skills)
+            
+            checklist_obj = Skillplan_CheckList.objects.filter(
+                skillPlan = sp,
+                character = character
+            ).first()
+            
+            if checklist_obj:
+                checklist_obj.status = status
+            else:
+                checklist_obj = Skillplan_CheckList.objects.create(status=status)
+                checklist_obj.skillPlan.add(sp)
+                checklist_obj.character.add(character)
+
+            checklist_obj.save()
+            
     return character
 
 def update_character_skills(character):

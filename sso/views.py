@@ -15,7 +15,7 @@ import ban.models as ban_models
 from recruitment.models import Applications_access
 import secrets
 
-CORPID = 98628176
+CORPID = 98781954
 
 
 # Funcion para llamar hacer el login con la web de Eve
@@ -220,25 +220,21 @@ def refresh_token(character):
         character = esi_views.character_skill_points(character)
         user = character.user_character
 
-        if character.main == True and character.corpId != CORPID:
-            if user.groups.filter(name="Reserva Imperial").exists():
-                user.groups.clear()
-                ice_group = Group.objects.get(name = "Reserva Imperial")
-                user.groups.add(ice_group)
-            else:
-                user.groups.clear()
-        
-        if character.main == True and character.corpId == CORPID:
-            if not user.groups.filter(name="Reserva Imperial").exists():
-                group_member = Group.objects.get(name="Miembro")
-                user.groups.add(group_member)
-            else:
-                Applications_access.objects.filter(user = user).delete()
+        ice_group = Group.objects.get(name="Reserva Imperial")
+        member_group = Group.objects.get(name = "Miembro")
 
+        if character.corpId == CORPID:
+            if character.main == True:
+                user.groups.add(member_group)
+                user.groups.remove(ice_group)
+                Applications_access.objects.filter(user=user).delete()
+        else:
+            if character.main == True and not ban_models.BannedCharacter.objects.filter(character_id=character.characterId).exists() and Applications_access.objects.filter(user=user).exists() == False:
+                user.groups.clear()
+                user.groups.add(ice_group)
         user.save()
         character.save()
         
-
     else:
         print(f"Error al refrescar token de {character.characterName}: {response.text}")
 
@@ -250,9 +246,10 @@ def eve_logout(request):
 def inactive_user():
     limit_time = timezone.now() - timedelta(days=30)
     inactive_group = Group.objects.get_or_create(name="Reserva Imperial")
-    list_members = User.objects.filter(last_login__lt=limit_time)
-
-    for member in list_members:
+    list_pj = EveCharater.objects.filter(deleted=False, main=True).exclude(corpId=CORPID).all()
+    
+    for pj in list_pj:
+        member = pj.user_character
         member.groups.clear()
         member.groups.add(inactive_group)
         member.save()
