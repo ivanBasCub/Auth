@@ -76,7 +76,6 @@ def dashboard(request):
     else:
         disable_btn = False
 
-
     return render(request, "dashboard.html",{
         "main_pj" : main_pj,
         "list_alts" : list_alts,

@@ -27,6 +27,9 @@ def character_corp_alliance_info(character):
     }
 
     response_char = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}', headers=headers)
+    if response_char.status_code != 200:
+        return character
+    
     data = response_char.json()
     print(data)
     if "corporation_id" in data:
@@ -62,6 +65,8 @@ def character_wallet_money(character):
     }
 
     response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/wallet', headers= headers)
+    if response.status_code != 200:
+        return character
     data = response.json()
 
     character.walletMoney = data
@@ -81,6 +86,8 @@ def character_wallet_transactions(character):
     }
 
     response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/wallet/transactions', headers=headers)
+    if response.status_code != 200:
+        return character
     data = response.json()
 
     character.wallet_trans = data
@@ -99,6 +106,8 @@ def character_skill_points(character):
     }
 
     response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/skills', headers=headers)
+    if response.status_code != 200:
+        return character
     data = response.json()
     character.totalSkillPoints = data["total_sp"]
 
@@ -144,6 +153,8 @@ def update_character_skills(character):
     }
 
     response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/skills', headers=headers)
+    if response.status_code != 200:
+        return character
     data = response.json()
     character.totalSkillPoints = data["total_sp"]
 
@@ -391,8 +402,6 @@ def create_transfer_notification(character, suspicious_id, date_str, amount):
             amount = amount
         )
     
-
-
 def suspicious_name(id, susp_type):
     headers = {
         "Accept-Language": "",

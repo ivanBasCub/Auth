@@ -4,6 +4,12 @@ from sso.models import EveCharater
 from skillplans.models import Skillplan, Skillplan_CheckList
 from web.views import check_skill
 
+def check_skill(pj_skill, skillplan):
+        for skill, nivel in skillplan.items():
+            if skill not in pj_skill or pj_skill[skill] < nivel:
+                return False
+        return True
+
 @shared_task
 def fits():
     fit_list()
@@ -11,28 +17,33 @@ def fits():
 @shared_task
 def character_skill_list():
     list_character = EveCharater.objects.all()
-    skillplan_list = Skillplan.objects.all()
     
     for character in list_character:
         character = update_character_skills(character)
         character.save()
 
+            
+@shared_task
+def refresh_skillplans():
+    list_character = EveCharater.objects.all()
+    skillplan_list = Skillplan.objects.all()
+    
     for sp in skillplan_list:
-        for pj in sp.characters.all():
-            pj_skill = pj.skills
+        for char in list_character:
+            char_skill = char.skills
             sp_skills = sp.skills
-            status = check_skill(pj_skill, sp_skills)
+            status = check_skill(char_skill, sp_skills)
             
             checklist_obj = Skillplan_CheckList.objects.filter(
                 skillPlan = sp,
-                character = pj
+                character = char
             ).first()
-            
+
             if checklist_obj:
                 checklist_obj.status = status
             else:
                 checklist_obj = Skillplan_CheckList.objects.create(status=status)
                 checklist_obj.skillPlan.add(sp)
-                checklist_obj.character.add(pj)
+                checklist_obj.character.add(char)
 
             checklist_obj.save()

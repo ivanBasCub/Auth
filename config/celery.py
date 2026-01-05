@@ -24,7 +24,7 @@ app.conf.beat_schedule = {
     },
     'update_tokens': {
         'task' : 'sso.tasks.tokens',
-        'schedule': 900,
+        'schedule': 600,
         'args' : ()
     },
     'inactive_users':{
@@ -40,6 +40,11 @@ app.conf.beat_schedule = {
     'check_transfers':{
         'task' : 'ban.tasks.check_transfers',
         'schedule': 3600,
+        'args': ()
+    },
+    'update_skillplans': {
+        'task': 'esi.tasks.refresh_skillplans',
+        'schedule': 7200,
         'args': ()
     }
 }

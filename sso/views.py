@@ -15,9 +15,6 @@ import ban.models as ban_models
 from recruitment.models import Applications_access
 import secrets
 
-CORPID = 98628176
-
-
 # Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -134,7 +131,7 @@ def save_eve_character(user, user_info, tokens, expiration):
     
     character = esi_views.character_corp_alliance_info(character)
     
-    if character.corpId == CORPID:
+    if character.corpId == settings.CORP_ID:
         member_group = Group.objects.get(name = "Miembro")
         user.groups.add(member_group)
         user.save()
@@ -145,7 +142,7 @@ def save_eve_character(user, user_info, tokens, expiration):
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId != CORPID:
+        if character.corpId != settings.CORP_ID:
             state = False
             if "Cynosural Field Theory" in character.skills:
                 if character.skills["Cynosural Field Theory"] == 5:
@@ -177,7 +174,7 @@ def refresh_eve_character(user, user_info, tokens, expiration):
         
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId == CORPID:
+        if character.corpId == settings.CORP_ID:
             member_group = Group.objects.get(name = "Miembro")
             user.groups.add(member_group)
             user.save()
@@ -223,7 +220,7 @@ def refresh_token(character):
         ice_group = Group.objects.get(name="Reserva Imperial")
         member_group = Group.objects.get(name = "Miembro")
 
-        if character.corpId == CORPID:
+        if character.corpId == settings.CORP_ID:
             if character.main == True:
                 user.groups.add(member_group)
                 user.groups.remove(ice_group)
@@ -246,7 +243,7 @@ def eve_logout(request):
 def inactive_user():
     limit_time = timezone.now() - timedelta(days=30)
     inactive_group = Group.objects.get_or_create(name="Reserva Imperial")
-    list_pj = EveCharater.objects.filter(deleted=False, main=True).exclude(corpId=CORPID).all()
+    list_pj = EveCharater.objects.filter(deleted=False, main=True).exclude(corpId=settings.CORP_ID).all()
     
     for pj in list_pj:
         member = pj.user_character
