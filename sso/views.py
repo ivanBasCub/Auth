@@ -131,7 +131,7 @@ def save_eve_character(user, user_info, tokens, expiration):
     
     character = esi_views.character_corp_alliance_info(character)
     
-    if character.corpId == settings.CORP_ID:
+    if character.corpId == int(settings.CORP_ID):
         member_group = Group.objects.get(name = "Miembro")
         user.groups.add(member_group)
         user.save()
@@ -142,7 +142,7 @@ def save_eve_character(user, user_info, tokens, expiration):
 
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId != settings.CORP_ID:
+        if character.corpId != int(settings.CORP_ID):
             state = False
             if "Cynosural Field Theory" in character.skills:
                 if character.skills["Cynosural Field Theory"] == 5:
@@ -174,7 +174,7 @@ def refresh_eve_character(user, user_info, tokens, expiration):
         
     if user.username == user_info["CharacterName"].replace(" ","_"):
         character.main = True
-        if character.corpId == settings.CORP_ID:
+        if character.corpId == int(settings.CORP_ID):
             member_group = Group.objects.get(name = "Miembro")
             user.groups.add(member_group)
             user.save()
@@ -188,7 +188,7 @@ def ban_notice(request):
 
 # Funcion para refrescar el token de los pj de Eve
 def refresh_token(character):
-
+    
     headers = {
         'Authorization' : f'Basic {b64encode(f"{settings.CLIENT_ID}:{settings.CLIENT_SECRET}".encode()).decode()}',
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -219,14 +219,16 @@ def refresh_token(character):
 
         ice_group = Group.objects.get(name="Reserva Imperial")
         member_group = Group.objects.get(name = "Miembro")
-
-        if character.corpId == settings.CORP_ID:
+        
+        if character.corpId == int(settings.CORP_ID):
             if character.main == True:
+                print("Miembro")
                 user.groups.add(member_group)
                 user.groups.remove(ice_group)
                 Applications_access.objects.filter(user=user).delete()
         else:
             if character.main == True and not ban_models.BannedCharacter.objects.filter(character_id=character.characterId).exists() and Applications_access.objects.filter(user=user).exists() == False:
+                print("Reserva")
                 user.groups.clear()
                 user.groups.add(ice_group)
         user.save()
