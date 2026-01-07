@@ -34,14 +34,14 @@ services:
     restart: unless-stopped
   
   django_server:
-    build: .
+    build: ./django_server
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/app
+      - ./django_server:/app
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ./.env
     environment:
       - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
       - CELERY_RESULT_BACKEND=rpc://
@@ -54,12 +54,12 @@ services:
     restart: unless-stopped
 
   celery_worker:
-    build: .
+    build: ./django_server
     command: celery -A config worker -l info
     volumes:
-      - .:/app
+      - ./django_server:/app
     env_file:
-      - .env
+      - ./.env
     environment:
       - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
       - CELERY_RESULT_BACKEND=rpc://
@@ -72,12 +72,12 @@ services:
     restart: unless-stopped
 
   celery_beat:
-    build: .
+    build: ./django_server
     command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
-      - .:/app
+      - ./django_server:/app
     env_file:
-      - .env
+      - ./.env
     environment:
       - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
       - CELERY_RESULT_BACKEND=rpc://
@@ -87,6 +87,24 @@ services:
         condition: service_healthy
       mysql_server:
         condition: service_healthy
+    restart: unless-stopped
+
+  discord_bot:
+    build: ./discord_bot
+    command: python main.py
+    volumes: 
+      - ./discord_bot:/bot 
+    env_file: 
+      - ./.env 
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_USER_PASS}@mysql_server:${MYSQL_PORT}/${DATABASE}
+      - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
+    depends_on: 
+      rabbit_server: 
+        condition: service_healthy 
+      mysql_server: 
+        condition: service_healthy 
     restart: unless-stopped
 
 volumes:
