@@ -556,7 +556,7 @@ def suspicious_notification_list(request):
 
 #### Member list
 @login_required(login_url="/")
-def report_members(request):
+def report_members_list(request):
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     members = EveCharater.objects.filter(main= True).all()
     
@@ -641,10 +641,10 @@ def skillplan_reports(request):
     skillplans = Skillplan.objects.filter(name__in = ["Guardia Imperial","Vanguardia","Legionario","Primaris","Campeon del capitulo","Ultramarine","DeathWacth","Magic 14"]).all()
     corp_members = User.objects.filter(groups__name = "Miembro")
     main_list = EveCharater.objects.filter(main = True, user_character__in=corp_members).all()
-
+    
     for main in main_list:
         main.skillplanCheck = Skillplan_CheckList.objects.filter(character = main,skillPlan__in = skillplans).all().order_by("skillPlan")
-
+    
     if request.method == "POST":
         if "csv" in request.POST:
             file_name = "skillplan" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
@@ -692,6 +692,78 @@ def groups_report(request):
         "groups": groups
     })
 
+### Member Data Report
+@login_required(login_url="/")
+def report_member_data(request):
+    class Asset():
+        def __init__(self, item_id, item_name, quantity, char):
+            self.item_id = item_id
+            self.item_name = item_name
+            self.quantity = quantity
+            self.char = char
+            
+    class Transaction():
+        def __init__(self):
+            self.char_name = ""
+            self.amount = 0
+            self.target_name = ""
+            self.date = ""
+
+    if not request.user.groups.filter(name="Director").exists():
+        return redirect("/dashboard/")
+    
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_user = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
+    
+    for user in list_user:
+        user.username = user.username.replace("_"," ")
+        
+    if request.method == "POST":
+        user_id = int(request.POST.get("user", 0))
+        user = User.objects.get(id=user_id)
+        list_character = EveCharater.objects.filter(user_character=user)
+        grouped_assets = {}
+
+        for char in list_character:
+            data = esi_views.character_assets(char)
+
+            for item in data:
+                type_id = item["type_id"]
+                quantity = item["quantity"]
+
+                if type_id not in grouped_assets:
+                    grouped_assets[type_id] = {
+                        "item_id": type_id,
+                        "item_name": esi_views.item_name(type_id),
+                        "quantity": quantity,
+                        "chars": {char.characterName}
+                    }
+                else:
+                    grouped_assets[type_id]["quantity"] += quantity
+                    grouped_assets[type_id]["chars"].add(char.characterName)
+
+        assets = []
+        for data in grouped_assets.values():
+            asset = Asset(
+                item_id=data["item_id"],
+                item_name=data["item_name"],
+                quantity=data["quantity"],
+                char=", ".join(data["chars"])  # si quieres ver qué personajes lo tienen
+            )
+            assets.append(asset)
+
+        return render(request, "corp/reports/member_data.html", {
+            "main_pj": main_pj,
+            "list_user": list_user,
+            "assets": assets
+        })
+
+    
+    return render(request, "corp/reports/member_data.html",{
+        "main_pj": main_pj,
+        "list_user": list_user
+    })
+    
 ### BANS
 
 #### Ban list

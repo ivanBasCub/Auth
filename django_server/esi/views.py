@@ -7,7 +7,6 @@ from skillplans.models import Skillplan, Skillplan_CheckList
 from ban.models import SuspiciousNotification
 from datetime import datetime
 import requests
-import json
 
 def check_skill(pj_skill, skillplan):
         for skill, nivel in skillplan.items():
@@ -421,3 +420,20 @@ def suspicious_name(id, susp_type):
     data = response.json()
 
     return data["name"]
+
+def character_assets(char):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-12-16",
+        "X-Tenant": "",
+        "If-Modified-Since": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {char.accessToken}"
+    }
+    
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/assets", headers=headers)
+    if response.status_code != 200:
+        return []
+    
+    return response.json()

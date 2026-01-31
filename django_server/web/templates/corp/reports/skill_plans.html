@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block style %}
-<title>SkillPlans Report - Helgast Auth</title>
+<title>Skill Plans Report - Helgast Auth</title>
 {% endblock %}
 
 {% block content %}
@@ -20,7 +20,18 @@
                     <h3>Main SkillPlans Report</h3>
                 </div>
             </div>
+            <div class="d-flex flex-wrap ms-auto align-items-start gap-1 col-12 col-md-4">
+                <span class="badge bg-success">Guardia Imperial:  / {{main_list.count}}</span>
+                <span class="badge bg-success">Vanguardia: / {{main_list.count}}</span>
+                <span class="badge bg-success">Legionario: / {{main_list.count}}</span>
+                <span class="badge bg-success">Primaris: / {{main_list.count}}</span>
+                <span class="badge bg-success">Campeon del capitulo: / {{main_list.count}}</span>
+                <span class="badge bg-success">Ultramarine: / {{main_list.count}}</span>
+                <span class="badge bg-success">DeathWacth: / {{main_list.count}}</span>
+                <span class="badge bg-success">Magic 14: / {{main_list.count}}</span>
+            </div>
         </div>
+
         <div class="card-body">
             <div class="d-flex justify-content-between">
                 <form method="post">
@@ -54,7 +65,7 @@
                     {% for main in main_list %}
                     <tr>
                         <td class="text-center" style="vertical-align: middle;">{{main.characterName}}</td>
-                        
+
                         {% for sp_check in main.skillplanCheck.all %}
                         <td class="text-center" style="vertical-align: middle;">
                             {% if sp_check.status %}

@@ -18,10 +18,10 @@ from django.contrib import admin
 from django.urls import path
 import sso.views as sso_views
 import web.views as web_views
+from django.conf import settings
 
 urlpatterns = [
     path('', web_views.index, name="main"),
-    path('admin/', admin.site.urls),
     path('sso/login/', sso_views.eve_login, name='eve_login'),
     path('sso/callback/', sso_views.eve_callback, name='eve_callback'),
     path('sso/logout/', sso_views.eve_logout, name="eve_logout"),
@@ -52,10 +52,11 @@ urlpatterns = [
     path('auth/corp/ban/category/del/<int:category_id>/', web_views.del_ban_category, name="del_ban_category"),
     path('auth/corp/admin/users/', web_views.user_control_list, name="control-users"),
     ## Reports
-    path('auth/corp/reports/show/1/', web_views.report_members, name="member_report"),
+    path('auth/corp/reports/show/1/', web_views.report_members_list, name="member_report"),
     path('auth/corp/reports/show/2/', web_views.fats_reports, name="fats_report"),
     path('auth/corp/reports/show/3/', web_views.skillplan_reports, name="fats_report"),
     path('auth/corp/reports/show/4/', web_views.groups_report, name="groups_report"),
+    path('auth/corp/reports/show/5/', web_views.report_member_data, name="member_data_report"),
     # Zona de Fats
     path('auth/fats/list/', web_views.fat_list, name="fat_list"),
     path('auth/fats/add/', web_views.add_fat, name="add_fat"),
@@ -79,3 +80,8 @@ urlpatterns = [
     path('auth/recruitment/ice/request/', web_views.applications_request, name="ice-applications"),
     path('auth/recruitment/fridge/', web_views.frigde, name="fridgge"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+            path('admin/', admin.site.urls),
+    ]

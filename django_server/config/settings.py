@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-cqf0+=zm#hfir!hp2-0m^*5q8$vp$*#99mvap9-944%l=2p1_c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -42,9 +42,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.authhelgast.com'
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
