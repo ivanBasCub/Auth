@@ -30,13 +30,22 @@
                     <div class="from-group">
                         <label for="user">Select One Member</label>
                         <select name="user" id="user" class="form-select" required>
-                            <option value="" disabled selected>Select One Option</option>
+                            <option value="" disabled selected>Select One Member</option>
                             {% for user in list_user %}
                             <option value="{{user.id}}">{{user.username}}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-danger w-100 mt-2">Check User Data</button>
+                    <div id="character_selector" class="from-group">
+                        <label for="char">Select One Member Character:</label>
+                        <select name="char" id="char" class="form-select" required>
+                            <option value="" disabled selected> Select One Character</option>
+                            {% for char in list_characters %}
+                            <option class="char user-{{char.user_character.id}}" value="{{char.id}}" style="display: none;">{{char.characterName}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 mt-2">Check Character Data</button>
                 </form>
             </div>
         </div>
@@ -52,7 +61,6 @@
                                 <th></th>
                                 <th>Item Name</th>
                                 <th>Quantity</th>
-                                <th>Character</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,7 +74,6 @@
                                         {{asset.item_name}}
                                     </td>
                                     <td>{{asset.quantity}}</td>
-                                    <td>{{asset.char}}</td>
                                 </tr>
                                 {% endfor %}
                             {% endif %}
@@ -96,4 +103,5 @@
        
     </div>
 </main>
+<script src="{% static 'js/member_data.js' %}"></script>
 {% endblock %}

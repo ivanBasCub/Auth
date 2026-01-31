@@ -696,51 +696,40 @@ def groups_report(request):
 @login_required(login_url="/")
 def report_member_data(request):
     class Asset():
-        def __init__(self, item_id, item_name, quantity, char):
+        def __init__(self, item_id, item_name, quantity):
             self.item_id = item_id
             self.item_name = item_name
             self.quantity = quantity
-            self.char = char
-            
-    class Transaction():
-        def __init__(self):
-            self.char_name = ""
-            self.amount = 0
-            self.target_name = ""
-            self.date = ""
 
     if not request.user.groups.filter(name="Director").exists():
         return redirect("/dashboard/")
     
     main_pj = EveCharater.objects.get(main=True, user_character = request.user)
     list_user = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
+    list_characters = EveCharater.objects.exclude(characterName = "Adjutora Helgast").all()
     
     for user in list_user:
         user.username = user.username.replace("_"," ")
         
     if request.method == "POST":
-        user_id = int(request.POST.get("user", 0))
-        user = User.objects.get(id=user_id)
-        list_character = EveCharater.objects.filter(user_character=user)
+        char_id = int(request.POST.get("char", 0))
+        char = EveCharater.objects.filter(id = char_id).first()
         grouped_assets = {}
 
-        for char in list_character:
-            data = esi_views.character_assets(char)
+        data = esi_views.character_assets(char)
 
-            for item in data:
-                type_id = item["type_id"]
-                quantity = item["quantity"]
+        for item in data:
+            type_id = item["type_id"]
+            quantity = item["quantity"]
 
-                if type_id not in grouped_assets:
-                    grouped_assets[type_id] = {
-                        "item_id": type_id,
-                        "item_name": esi_views.item_name(type_id),
-                        "quantity": quantity,
-                        "chars": {char.characterName}
-                    }
-                else:
-                    grouped_assets[type_id]["quantity"] += quantity
-                    grouped_assets[type_id]["chars"].add(char.characterName)
+            if type_id not in grouped_assets:
+                grouped_assets[type_id] = {
+                    "item_id": type_id,
+                    "item_name": esi_views.item_name(type_id),
+                    "quantity": quantity,
+                }
+            else:
+                grouped_assets[type_id]["quantity"] += quantity
 
         assets = []
         for data in grouped_assets.values():
@@ -748,20 +737,20 @@ def report_member_data(request):
                 item_id=data["item_id"],
                 item_name=data["item_name"],
                 quantity=data["quantity"],
-                char=", ".join(data["chars"])  # si quieres ver qué personajes lo tienen
             )
             assets.append(asset)
 
         return render(request, "corp/reports/member_data.html", {
             "main_pj": main_pj,
             "list_user": list_user,
+            "list_characters" : list_characters,
             "assets": assets
         })
-
     
     return render(request, "corp/reports/member_data.html",{
         "main_pj": main_pj,
-        "list_user": list_user
+        "list_user": list_user,
+        "list_characters" : list_characters
     })
     
 ### BANS
