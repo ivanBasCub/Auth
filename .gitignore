@@ -6,5 +6,6 @@ notes.md
 **/__pycache__/
 *.pyc
 test.py
-/bot/json/*
+discord_bot/json/*.json
 /static/csv/*
+discord.log

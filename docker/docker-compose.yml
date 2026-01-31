@@ -43,6 +43,7 @@ services:
     env_file:
       - ./.env
     environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=amqp://${RABBIT_USER}:${RABBIT_PASS}@rabbit_server:${RABBIT_PORT_1}//
       - CELERY_RESULT_BACKEND=rpc://
       - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_USER_PASS}@mysql_server:${MYSQL_PORT}/${DATABASE}
