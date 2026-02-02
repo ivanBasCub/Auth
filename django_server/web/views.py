@@ -717,6 +717,7 @@ def report_member_data(request):
     main_pj = EveCharater.objects.get(main=True, user_character=request.user)
     list_user = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
     list_characters = EveCharater.objects.exclude(characterName="Adjutora Helgast").all()
+    list_ref_types = ["acceleration_gate_fee","advertisement_listing_fee","agent_donation","agent_location_services","agent_miscellaneous","agent_mission_collateral_paid","agent_mission_collateral_refunded","agent_mission_reward","agent_mission_reward_corporation_tax","agent_mission_time_bonus_reward","agent_mission_time_bonus_reward_corporation_tax","agent_security_services","agent_services_rendered","agents_preward","air_career_program_reward","alliance_maintainance_fee","alliance_registration_fee","allignment_based_gate_toll","asset_safety_recovery_tax","bounty","bounty_prize","bounty_prize_corporation_tax","bounty_prizes","bounty_reimbursement","bounty_surcharge","brokers_fee","clone_activation","clone_transfer","contraband_fine","contract_auction_bid","contract_auction_bid_corp","contract_auction_bid_refund","contract_auction_sold","contract_brokers_fee","contract_brokers_fee_corp","contract_collateral","contract_collateral_deposited_corp","contract_collateral_payout","contract_collateral_refund","contract_deposit","contract_deposit_corp","contract_deposit_refund","contract_deposit_sales_tax","contract_price","contract_price_payment_corp","contract_reversal","contract_reward","contract_reward_deposited","contract_reward_deposited_corp","contract_reward_refund","contract_sales_tax","copying","corporate_reward_payout","corporate_reward_tax","corporation_account_withdrawal","corporation_bulk_payment","corporation_dividend_payment","corporation_liquidation","corporation_logo_change_cost","corporation_payment","corporation_registration_fee","cosmetic_market_component_item_purchase","cosmetic_market_skin_purchase","cosmetic_market_skin_sale","cosmetic_market_skin_sale_broker_fee","cosmetic_market_skin_sale_tax","cosmetic_market_skin_transaction","courier_mission_escrow","cspa","cspaofflinerefund","daily_challenge_reward","daily_goal_payouts","daily_goal_payouts_tax","datacore_fee","dna_modification_fee","docking_fee","duel_wager_escrow","duel_wager_payment","duel_wager_refund","ess_escrow_transfer","external_trade_delivery","external_trade_freeze","external_trade_thaw","factory_slot_rental_fee","flux_payout","flux_tax","flux_ticket_repayment","flux_ticket_sale","freelance_jobs_broadcasting_fee","freelance_jobs_duration_fee","freelance_jobs_escrow_refund","freelance_jobs_reward","freelance_jobs_reward_corporation_tax","freelance_jobs_reward_escrow","gm_cash_transfer","gm_plex_fee_refund","industry_job_tax","infrastructure_hub_maintenance","inheritance","insurance","insurgency_corruption_contribution_reward","insurgency_suppression_contribution_reward","item_trader_payment","jump_clone_activation_fee","jump_clone_installation_fee","kill_right_fee","lp_store","manufacturing","market_escrow","market_fine_paid","market_provider_tax","market_transaction","medal_creation","medal_issued","milestone_reward_payment","mission_completion","mission_cost","mission_expiration","mission_reward","office_rental_fee","operation_bonus","opportunity_reward","planetary_construction","planetary_export_tax","planetary_import_tax","player_donation","player_trading","project_discovery_reward","project_discovery_tax","project_payouts","reaction","redeemed_isk_token","release_of_impounded_property","repair_bill","reprocessing_tax","researching_material_productivity","researching_technology","researching_time_productivity","resource_wars_reward","reverse_engineering","season_challenge_reward","security_processing_fee","shares","skill_purchase","skyhook_claim_fee","sovereignity_bill","store_purchase","store_purchase_refund","structure_gate_jump","transaction_tax","under_construction","upkeep_adjustment_fee","war_ally_contract","war_fee","war_fee_surrender"]
     
     for user in list_user:
         user.username = user.username.replace("_", " ")
@@ -769,37 +770,40 @@ def report_member_data(request):
                 "list_user": list_user,
                 "char": char,
                 "list_characters": list_characters,
-                "assets": assets
+                "assets": assets,
+                "list_ref_types":list_ref_types
             })
 
         else:
+            ref_filter = request.POST.get("ref_filter")
             data = esi_views.character_wallet_journal(char)
             transactions = []
 
             for trans in data:
-                amount = format_number(trans["amount"])
-                balance = format_number(trans["balance"])
-                context = trans.get("context_id_type", "").split("_")[0]
-                date = trans.get("date", "")
-                reason = trans.get("description", "")
-                ref = trans.get("ref_type", "").replace("_", " ")
+                if trans["ref_type"] == ref_filter or ref_filter == "":
+                    amount = format_number(trans["amount"])
+                    balance = format_number(trans["balance"])
+                    context = trans.get("context_id_type", "").split("_")[0]
+                    date = trans.get("date", "")
+                    reason = trans.get("description", "")
+                    ref = trans.get("ref_type", "").replace("_", " ")
 
-                if trans["first_party_id"] != char.characterId:
-                    target = trans["first_party_id"]
-                else:
-                    target = trans["second_party_id"]
-                    
-                target = esi_views.info_transfer_target_name(target)
+                    if trans["first_party_id"] != char.characterId:
+                        target = trans["first_party_id"]
+                    else:
+                        target = trans["second_party_id"]
+                        
+                    target = esi_views.info_transfer_target_name(target)
 
-                transactions.append(Transaction(
-                    amount=amount,
-                    balance=balance,
-                    context=context,
-                    reason=reason,
-                    ref_type=ref,
-                    target=target,
-                    date=date
-                ))
+                    transactions.append(Transaction(
+                        amount=amount,
+                        balance=balance,
+                        context=context,
+                        reason=reason,
+                        ref_type=ref,
+                        target=target,
+                        date=date
+                    ))
 
             if "csv" in request.POST:
                 filename = f"transactions_{char.characterName}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
@@ -822,13 +826,15 @@ def report_member_data(request):
                 "list_user": list_user,
                 "char": char,
                 "list_characters": list_characters,
-                "transactions": transactions
+                "transactions": transactions,
+                "list_ref_types":list_ref_types
             })
 
     return render(request, "corp/reports/member_data.html", {
         "main_pj": main_pj,
         "list_user": list_user,
-        "list_characters": list_characters
+        "list_characters": list_characters,
+        "list_ref_types":list_ref_types
     })
 
     

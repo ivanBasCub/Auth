@@ -46,12 +46,21 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="form-froup">
+                    <div class="form-group">
                         <label for="option">Kind of information</label>
                         <select name="option" class="form-select" required>
                             <option value="" disabled selected>Select One Option</option>
                             <option value="1">Assets</option>
                             <option value="2">Wallet Transsactions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ref_filter">Transactions filter</label>
+                        <select name="ref_filter" class="form-select">
+                            <option value="" selected>Select One Filter</option>
+                            {% for ref_type in list_ref_types %}
+                            <option value="{{ref_type}}">{{ref_type}}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="btn btn-danger w-100 mt-2">Check Character Data</button>
