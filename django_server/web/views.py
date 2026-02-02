@@ -775,12 +775,12 @@ def report_member_data(request):
             })
 
         else:
-            ref_filter = request.POST.get("ref_filter")
+            ref_filter = request.POST.getlist("ref_filter")
             data = esi_views.character_wallet_journal(char)
             transactions = []
 
             for trans in data:
-                if trans["ref_type"] == ref_filter or ref_filter == "":
+                if trans["ref_type"] in ref_filter or len(ref_filter) == 0:
                     amount = format_number(trans["amount"])
                     balance = format_number(trans["balance"])
                     context = trans.get("context_id_type", "").split("_")[0]
