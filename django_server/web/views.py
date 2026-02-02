@@ -14,6 +14,7 @@ from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
 from recruitment.models import Applications_access
 from django.conf import settings
+from django.http import HttpResponse
 import os, csv
 
 # ADDITIONAL FUNCTIONS
@@ -692,7 +693,6 @@ def groups_report(request):
         "groups": groups
     })
 
-### Member Data Report
 @login_required(login_url="/")
 def report_member_data(request):
     class Asset():
@@ -700,58 +700,137 @@ def report_member_data(request):
             self.item_id = item_id
             self.item_name = item_name
             self.quantity = quantity
+    
+    class Transaction():
+        def __init__(self, amount, balance, context, reason, ref_type, target, date):
+            self.amount = amount
+            self.balance = balance
+            self.context = context
+            self.reason = reason
+            self.ref_type = ref_type
+            self.target = target
+            self.date = date
 
     if not request.user.groups.filter(name="Director").exists():
         return redirect("/dashboard/")
     
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = EveCharater.objects.get(main=True, user_character=request.user)
     list_user = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
-    list_characters = EveCharater.objects.exclude(characterName = "Adjutora Helgast").all()
+    list_characters = EveCharater.objects.exclude(characterName="Adjutora Helgast").all()
     
     for user in list_user:
-        user.username = user.username.replace("_"," ")
+        user.username = user.username.replace("_", " ")
         
     if request.method == "POST":
         char_id = int(request.POST.get("char", 0))
-        char = EveCharater.objects.filter(id = char_id).first()
+        option = int(request.POST.get("option", 0))
+        char = EveCharater.objects.filter(id=char_id).first()
         grouped_assets = {}
 
-        data = esi_views.character_assets(char)
+        if option == 1:
+            data = esi_views.character_assets(char)
 
-        for item in data:
-            type_id = item["type_id"]
-            quantity = item["quantity"]
+            for item in data:
+                type_id = item["type_id"]
+                quantity = item["quantity"]
 
-            if type_id not in grouped_assets:
-                grouped_assets[type_id] = {
-                    "item_id": type_id,
-                    "item_name": esi_views.item_name(type_id),
-                    "quantity": quantity,
-                }
-            else:
-                grouped_assets[type_id]["quantity"] += quantity
+                if type_id not in grouped_assets:
+                    grouped_assets[type_id] = {
+                        "item_id": type_id,
+                        "item_name": esi_views.item_name(type_id),
+                        "quantity": quantity,
+                    }
+                else:
+                    grouped_assets[type_id]["quantity"] += quantity
 
-        assets = []
-        for data in grouped_assets.values():
-            asset = Asset(
-                item_id=data["item_id"],
-                item_name=data["item_name"],
-                quantity=data["quantity"],
-            )
-            assets.append(asset)
+            assets = []
+            for data in grouped_assets.values():
+                assets.append(Asset(
+                    item_id=data["item_id"],
+                    item_name=data["item_name"],
+                    quantity=data["quantity"],
+                ))
 
-        return render(request, "corp/reports/member_data.html", {
-            "main_pj": main_pj,
-            "list_user": list_user,
-            "list_characters" : list_characters,
-            "assets": assets
-        })
-    
-    return render(request, "corp/reports/member_data.html",{
+            if "csv" in request.POST:
+                filename = f"assets_{char.characterName}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+                response = HttpResponse(content_type='text/csv')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+                writer = csv.writer(response)
+                writer.writerow(["Item ID", "Item Name", "Quantity"])
+
+                for a in assets:
+                    writer.writerow([a.item_id, a.item_name, a.quantity])
+
+                return response
+
+            return render(request, "corp/reports/member_data.html", {
+                "main_pj": main_pj,
+                "list_user": list_user,
+                "char": char,
+                "list_characters": list_characters,
+                "assets": assets
+            })
+
+        else:
+            data = esi_views.character_wallet_journal(char)
+            transactions = []
+
+            for trans in data:
+                amount = format_number(trans["amount"])
+                balance = format_number(trans["balance"])
+                context = trans.get("context_id_type", "").split("_")[0]
+                date = trans.get("date", "")
+                reason = trans.get("description", "")
+                ref = trans.get("ref_type", "").replace("_", " ")
+
+                if trans["first_party_id"] != char.characterId:
+                    target = trans["first_party_id"]
+                else:
+                    target = trans["second_party_id"]
+                    
+                target = esi_views.info_transfer_target_name(target)
+
+                transactions.append(Transaction(
+                    amount=amount,
+                    balance=balance,
+                    context=context,
+                    reason=reason,
+                    ref_type=ref,
+                    target=target,
+                    date=date
+                ))
+
+            if "csv" in request.POST:
+                filename = f"transactions_{char.characterName}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+                response = HttpResponse(content_type='text/csv')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+                writer = csv.writer(response)
+                writer.writerow(["Amount", "Balance", "Context", "Reason", "Ref Type", "Target", "Date"])
+
+                for t in transactions:
+                    writer.writerow([
+                        t.amount, t.balance, t.context, t.reason,
+                        t.ref_type, t.target, t.date
+                    ])
+
+                return response
+
+            return render(request, "corp/reports/member_data.html", {
+                "main_pj": main_pj,
+                "list_user": list_user,
+                "char": char,
+                "list_characters": list_characters,
+                "transactions": transactions
+            })
+
+    return render(request, "corp/reports/member_data.html", {
         "main_pj": main_pj,
         "list_user": list_user,
-        "list_characters" : list_characters
+        "list_characters": list_characters
     })
+
     
 ### BANS
 

@@ -222,13 +222,11 @@ def refresh_token(character):
         
         if character.corpId == int(settings.CORP_ID):
             if character.main == True:
-                print("Miembro")
                 user.groups.add(member_group)
                 user.groups.remove(ice_group)
                 Applications_access.objects.filter(user=user).delete()
         else:
             if character.main == True and not ban_models.BannedCharacter.objects.filter(character_id=character.characterId).exists() and Applications_access.objects.filter(user=user).exists() == False:
-                print("Reserva")
                 user.groups.clear()
                 user.groups.add(ice_group)
         user.save()

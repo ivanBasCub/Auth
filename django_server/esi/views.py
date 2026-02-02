@@ -380,7 +380,7 @@ def create_transfer_notification(character, suspicious_id, date_str, amount):
             response = requests.get(f"{settings.EVE_ESI_API_URL}/alliances/{suspicious_id}", headers= headers)
 
     if response.status_code != 200:
-        logging.warning("El id {suspicious_id} no es de ninguna corporacion, alianza o jugador")
+        logging.warning(f"El id {suspicious_id} no es de ninguna corporacion, alianza o jugador")
         
     name =response.json()["name"]
    
@@ -434,6 +434,42 @@ def character_assets(char):
     
     response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/assets", headers=headers)
     if response.status_code != 200:
-        return []
+        return response.status_code
     
     return response.json()
+
+def character_wallet_journal(char):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-12-16",
+        "X-Tenant": "",
+        "If-Modified-Since": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {char.accessToken}"
+    }
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/wallet/journal/", headers=headers)
+    if response.status_code != 200:
+        return response.status_code
+    
+    return response.json()
+
+def info_transfer_target_name(id):
+    headers = {
+        "Accept": "application/json",
+        "X-Compatibility-Date": "2025-08-26",
+    }
+
+    url = f"{settings.EVE_ESI_API_URL}/universe/names/"
+    response = requests.post(url, json=[id], headers=headers)
+
+    if response.status_code != 200:
+        logging.warning(f"No se pudo resolver el ID {id}")
+        return f"Unknown ({id})"
+
+    data = response.json()
+
+    if not data:
+        return f"Unknown ({id})"
+
+    return data[0].get("name", f"Unknown ({id})")
