@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.contrib.auth.models import User
 from sso.models import EveCharater
-from .models import Asset, Item, ItemGroup
+from .models import Asset, Item
 from esi.views import character_assets, item_data, group_data, structure_data
 
 @shared_task
@@ -15,7 +15,6 @@ def update_member_assets():
     structure_cache = {}
 
     # Caches BD
-    existing_groups = {g.eve_id: g for g in ItemGroup.objects.all()}
     existing_items = {i.eve_id: i for i in Item.objects.all()}
 
     for char in list_characters:
@@ -58,31 +57,7 @@ def update_member_assets():
             data_item = item_cache[type_id]
 
             item_name = data_item.get("name", f"Unknown Item {type_id}")
-            group_id = data_item.get("group_id", 1)
             print(f"[INFO] {char.characterName} - {char.user_character.username} - {item_name}")
-            if group_id not in group_cache:
-                try:
-                    group_cache[group_id] = group_data(group_id)
-                except Exception as e:
-                    print(f"[ERROR] group_data({group_id}) → {e}")
-                    group_cache[group_id] = {
-                        "group_id": 1,
-                        "name": "Unknown Group"
-                    }
-
-            data_group = group_cache[group_id]
-
-            group_eve_id = data_group.get("group_id", 1)
-            group_name = data_group.get("name", "Unknown Group")
-
-            if group_eve_id not in existing_groups:
-                new_group = ItemGroup.objects.create(
-                    eve_id=group_eve_id,
-                    name=group_name
-                )
-                existing_groups[group_eve_id] = new_group
-
-            group_eve = existing_groups[group_eve_id]
 
             if location_id not in structure_cache:
                 try:
@@ -99,7 +74,6 @@ def update_member_assets():
                 new_item = Item.objects.create(
                     eve_id=type_id,
                     name=item_name,
-                    group=group_eve
                 )
                 existing_items[type_id] = new_item
 

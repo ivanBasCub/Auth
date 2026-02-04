@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from sso.models import EveCharater
-from .models import Asset, Item, ItemGroup
+from .models import Asset, Item
 from esi.views import character_assets, item_data, group_data, structure_data
 import time
 
@@ -10,10 +10,8 @@ def update_member_asset(char_id):
 
     # Caches API
     item_cache = {}
-    group_cache = {}
     structure_cache = {}
 
-    existing_groups = {g.eve_id: g for g in ItemGroup.objects.all()}
     existing_items = {i.eve_id: i for i in Item.objects.all()}
     
     data_assets = character_assets(character)
@@ -57,56 +55,31 @@ def update_member_asset(char_id):
         item_name = data_item.get("name", f"Unknown Item {type_id}")
         group_id = data_item.get("group_id", 1)
 
-        if group_id not in group_cache:
+        if location_id not in structure_cache:
             try:
-                group_cache[group_id] = group_data(group_id)
-            except Exception as e:
-                print(f"[ERROR] group_data({group_id}) → {e}")
-                group_cache[group_id] = {
-                    "group_id": 1,
-                    "name": "Unknown Group"
-                }
-
-            data_group = group_cache[group_id]
-
-            group_eve_id = data_group.get("group_id", 1)
-            group_name = data_group.get("name", "Unknown Group")
-
-            if group_eve_id not in existing_groups:
-                new_group = ItemGroup.objects.create(
-                    eve_id=group_eve_id,
-                    name=group_name
+                structure_cache[location_id] = structure_data(
+                    character=character,
+                    structure_id=location_id
                 )
-                existing_groups[group_eve_id] = new_group
+            except Exception:
+                structure_cache[location_id] = {"name": location_id}
 
-            group_eve = existing_groups[group_eve_id]
+        location_name = structure_cache[location_id].get("name", location_id)
 
-            if location_id not in structure_cache:
-                try:
-                    structure_cache[location_id] = structure_data(
-                        character=character,
-                        structure_id=location_id
-                    )
-                except Exception:
-                    structure_cache[location_id] = {"name": location_id}
-
-            location_name = structure_cache[location_id].get("name", location_id)
-
-            if type_id not in existing_items:
-                new_item = Item.objects.create(
-                    eve_id=type_id,
-                    name=item_name,
-                    group=group_eve
-                )
-                existing_items[type_id] = new_item
-
-            item = existing_items[type_id]
-            
-            Asset.objects.create(
-                character=character,
-                item=item,
-                quantity=quantity,
-                loc_flag=loc_flag,
-                location=location_name
+        if type_id not in existing_items:
+            new_item = Item.objects.create(
+                eve_id=type_id,
+                name=item_name
             )
+            existing_items[type_id] = new_item
+
+        item = existing_items[type_id]
+            
+        Asset.objects.create(
+            character=character,
+            item=item,
+            quantity=quantity,
+            loc_flag=loc_flag,
+            location=location_name
+        )
     

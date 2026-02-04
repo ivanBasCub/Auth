@@ -1,18 +1,9 @@
 from django.db import models
 from sso.models import EveCharater
 
-# Member Assets
-class ItemGroup(models.Model):
-    eve_id = models.PositiveBigIntegerField(default=0)
-    name = models.CharField(max_length=254)
-    
-    def __str__(self):
-        return self.name
-
 class Item(models.Model):
     eve_id = models.PositiveBigIntegerField(default=0)
     name = models.CharField(max_length=254)
-    group = models.ForeignKey(ItemGroup, on_delete=models.CASCADE, related_name="group")
     
     def __str__(self):
         return self.name
