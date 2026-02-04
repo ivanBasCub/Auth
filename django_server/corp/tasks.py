@@ -3,6 +3,31 @@ from django.contrib.auth.models import User
 from sso.models import EveCharater
 from .models import Asset, Item, ItemGroup
 from esi.views import character_assets, item_data, group_data, structure_data
+import time
+
+def safe_character_assets(char, retries=3):
+    for attempt in range(retries):
+        data = character_assets(char)
+
+        if isinstance(data, str):
+            print(f"[WARN] character_assets devolvió error: {data}")
+
+            if "420" in data or "Rate limit" in data:
+                wait = 2 + attempt
+                print(f"[INFO] Esperando {wait}s por rate limit…")
+                time.sleep(wait)
+                continue
+
+            return None
+
+        if not isinstance(data, list):
+            print(f"[ERROR] character_assets devolvió algo inesperado: {data}")
+            return None
+        
+        return data
+
+    print(f"[ERROR] character_assets falló tras {retries} intentos para {char}")
+    return None
 
 
 @shared_task
@@ -20,10 +45,10 @@ def update_member_assets():
     existing_items = {i.eve_id: i for i in Item.objects.all()}
 
     for char in list_characters:
-        data_assets = character_assets(char)
+        data_assets = safe_character_assets(char)
 
-        if not isinstance(data_assets, list):
-            print(f"[ERROR] character_assets devolvió algo inesperado: {data_assets}")
+        if not data_assets:
+            print(f"[ERROR] No se pudieron obtener assets para {char}")
             continue
 
         Asset.objects.filter(character=char).delete()
@@ -38,7 +63,7 @@ def update_member_assets():
             if not isinstance(type_id, int) or type_id <= 0:
                 print(f"[WARN] Asset con type_id inválido: {asset}")
                 continue
-            
+
             quantity = asset.get("quantity")
             if quantity is None:
                 print(f"[WARN] Asset sin quantity: {asset}")
@@ -107,7 +132,7 @@ def update_member_assets():
                 existing_items[type_id] = new_item
 
             item = existing_items[type_id]
-
+            
             Asset.objects.create(
                 character=char,
                 item=item,
