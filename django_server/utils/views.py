@@ -14,6 +14,7 @@ def esi_call(response):
     if remaining < RATE_LIMIT_THRESHOLD:
         print(f"[RATE] Quedan pocos tokens ({remaining}). Pausando 15 minutos…")
         time.sleep(RATE_LIMIT_SLEEP)
+        print("[RATE] Descanso terminado, continuando…")
 
     if response.status_code == 429:
         retry = int(response.headers.get("Retry-After", 10))
@@ -32,8 +33,9 @@ def esi_call(response):
 def handler(url, headers, page):
     params = {"page": page}
     response = requests.get(url, headers=headers, params=params)
+    print("URL:", response.url)
+    print("HEADERS:", response.headers)
     response = esi_call(response)
-    
     return response
 
 
