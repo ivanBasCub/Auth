@@ -20,7 +20,6 @@ def update_member_assets():
 
     for char in list_characters:
         data_assets = character_assets(char)
-
         if not data_assets:
             print(f"[ERROR] No se pudieron obtener assets para {char}")
             continue
@@ -28,7 +27,6 @@ def update_member_assets():
         Asset.objects.filter(character=char).delete()
 
         for asset in data_assets:
-
             if not isinstance(asset, dict):
                 print(f"[WARN] Asset inválido recibido (no es dict): {asset}")
                 continue
@@ -61,7 +59,7 @@ def update_member_assets():
 
             item_name = data_item.get("name", f"Unknown Item {type_id}")
             group_id = data_item.get("group_id", 1)
-
+            print(f"[INFO] {char.characterName} - {char.user_character.username} - {item_name}")
             if group_id not in group_cache:
                 try:
                     group_cache[group_id] = group_data(group_id)
