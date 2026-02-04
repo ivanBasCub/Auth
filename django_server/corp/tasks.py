@@ -22,10 +22,34 @@ def update_member_assets():
     for char in list_characters:
         data_assets = character_assets(char)
 
+        if not isinstance(data_assets, list):
+            print(f"[ERROR] character_assets devolvió algo inesperado: {data_assets}")
+            continue
+
         Asset.objects.filter(character=char).delete()
 
         for asset in data_assets:
+
+            if not isinstance(asset, dict):
+                print(f"[WARN] Asset inválido recibido (no es dict): {asset}")
+                continue
+
             type_id = asset.get("type_id")
+            if not isinstance(type_id, int) or type_id <= 0:
+                print(f"[WARN] Asset con type_id inválido: {asset}")
+                continue
+            
+            quantity = asset.get("quantity")
+            if quantity is None:
+                print(f"[WARN] Asset sin quantity: {asset}")
+                continue
+
+            location_id = asset.get("location_id")
+            if location_id is None:
+                print(f"[WARN] Asset sin location_id: {asset}")
+                continue
+
+            loc_flag = asset.get("location_flag", "")
 
             if type_id not in item_cache:
                 try:
@@ -36,7 +60,6 @@ def update_member_assets():
 
             data_item = item_cache[type_id]
 
-            # Valores seguros
             item_name = data_item.get("name", f"Unknown Item {type_id}")
             group_id = data_item.get("group_id", 1)
 
@@ -52,7 +75,6 @@ def update_member_assets():
 
             data_group = group_cache[group_id]
 
-            # Valores seguros
             group_eve_id = data_group.get("group_id", 1)
             group_name = data_group.get("name", "Unknown Group")
 
@@ -64,8 +86,6 @@ def update_member_assets():
                 existing_groups[group_eve_id] = new_group
 
             group_eve = existing_groups[group_eve_id]
-
-            location_id = asset.get("location_id")
 
             if location_id not in structure_cache:
                 try:
@@ -91,7 +111,7 @@ def update_member_assets():
             Asset.objects.create(
                 character=char,
                 item=item,
-                quantity=asset.get("quantity", 0),
-                loc_flag=asset.get("location_flag", ""),
+                quantity=quantity,
+                loc_flag=loc_flag,
                 location=location_name
             )
