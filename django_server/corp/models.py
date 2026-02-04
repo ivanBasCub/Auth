@@ -8,12 +8,19 @@ class Item(models.Model):
     def __str__(self):
         return self.name
     
+class Location(models.Model):
+    eve_id = models.PositiveBigIntegerField(default=0)
+    name = models.TextField(default="")
+    
+    def __str__(self):
+        return self.name
+    
 class Asset(models.Model):
     character = models.ForeignKey(EveCharater, on_delete=models.CASCADE, related_name="assets")
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="assets")
     quantity = models.PositiveBigIntegerField(default=1)
     loc_flag = models.CharField(max_length=254)
-    location = models.TextField(default="")
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name="assets")
     
     def __str__(self):
         return f"{self.character.characterName} - {self.quantity} - {self.item.name} - {self.location}"

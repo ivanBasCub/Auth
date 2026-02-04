@@ -6,22 +6,18 @@ RATE_LIMIT_SLEEP = 900
 
 def esi_call(response):
     remaining = int(response.headers.get("X-Ratelimit-Remaining", 999))
-    used = int(response.headers.get("X-Ratelimit-Used", 0))
-    limit = response.headers.get("X-Ratelimit-Limit", "unknown")
-    
-    print(f"[RATE] Remaining={remaining} Used={used} Limit={limit}")
-    
+
     if remaining < RATE_LIMIT_THRESHOLD:
         print(f"[RATE] Quedan pocos tokens ({remaining}). Pausando 15 minutos…")
         time.sleep(RATE_LIMIT_SLEEP)
         
-
     if response.status_code == 429:
         retry = int(response.headers.get("Retry-After", 10))
         print(f"[RATE] 429 recibido. Esperando {retry}s…")
         time.sleep(retry)
     
     if response.status_code == 420:
+        print(f"[WARNING] remaing tokens {remaining}")
         print("[RATE] Error 420 recibido. Pausando 15 minutos…")
         time.sleep(RATE_LIMIT_SLEEP)
         print("[RATE] Descanso terminado, continuando…")
@@ -34,8 +30,6 @@ def esi_call(response):
 def handler(url, headers, page):
     params = {"page": page}
     response = requests.get(url, headers=headers, params=params)
-    print("[INFO] URL:", response.url)
-    print("[INFO] HEADERS:", response.headers)
     response = esi_call(response)
     return response
 

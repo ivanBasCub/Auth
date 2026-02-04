@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.contrib.auth.models import User
 from sso.models import EveCharater
-from .models import Asset, Item
+from .models import Asset, Item, Location
 from esi.views import character_assets, item_data, structure_data
 
 @shared_task
@@ -10,9 +10,7 @@ def update_member_assets():
     list_characters = EveCharater.objects.filter(user_character__in=corp_members)
 
     existing_items = {i.eve_id: i for i in Item.objects.all()}
-
-    item_cache = {}
-    structure_cache = {}
+    existing_locations = {l.eve_id: l for l in Item.objects.all()}
 
     for char in list_characters:
 
@@ -24,7 +22,7 @@ def update_member_assets():
         Asset.objects.filter(character=char).delete()
 
         for asset in data_assets:
-
+            
             if not isinstance(asset, dict):
                 print(f"[WARN] Asset inválido recibido (no es dict): {asset}")
                 continue
@@ -45,47 +43,42 @@ def update_member_assets():
                 continue
 
             loc_flag = asset.get("location_flag", "")
+            print(f"[INFO] {char.characterName} - {type_id} - {quantity}")
 
             if type_id in existing_items:
-                item = existing_items[type_id]
-
+                item = Item.objects.get(eve_id = type_id)
             else:
-                if type_id not in item_cache:
-                    try:
-                        item_cache[type_id] = item_data(type_id)
-                    except Exception as e:
-                        print(f"[ERROR] item_data({type_id}) → {e}")
-                        item_cache[type_id] = {}
-
-                data_item = item_cache[type_id]
-
-                item_name = data_item.get("name", f"Unknown Item {type_id}")
-                print(f"[INFO] {char.characterName} - {char.user_character.username} - {item_name}")
-
-                # Crear item en BD
-                item = Item.objects.create(
-                    eve_id=type_id,
-                    name=item_name,
-                )
-
-                # Guardarlo en caché BD
-                existing_items[type_id] = item
-                
-            if location_id not in structure_cache:
                 try:
-                    structure_cache[location_id] = structure_data(
-                        character=char,
-                        structure_id=location_id
+                    data_item = item_data(type_id)
+                    item_name = data_item.get("name", f"Unknown Item {type_id}")
+                    Item.objects.create(
+                        eve_id = type_id,
+                        name = item_name
                     )
-                except Exception:
-                    structure_cache[location_id] = {"name": location_id}
+                
+                    item = Item.objects.get(eve_id = type_id)    
+                except Exception as e:
+                    print(f"[ERROR] data_item({type_id}) → {e}")
 
-            location_name = structure_cache[location_id].get("name", location_id)
+            if location_id in existing_locations:
+                location = Location.objects.get(eve_id = type_id)
+            else:
+                try:
+                    data_location = structure_data(location_id)
+                    location_name = data_location.get("name", f"{type_id}")
+                    Location.objects.create(
+                        eve_id = type_id,
+                        name = location_name
+                    )
+                
+                    location = Location.objects.get(eve_id = type_id)    
+                except Exception as e:
+                    print(f"[ERROR] data_location({type_id}) → {e}")
 
             Asset.objects.create(
                 character=char,
                 item=item,
                 quantity=quantity,
                 loc_flag=loc_flag,
-                location=location_name
+                location = location
             )
