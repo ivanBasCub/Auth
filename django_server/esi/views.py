@@ -517,17 +517,15 @@ def structure_data(character, structure_id):
         "If-Modified-Since": "",
         "Accept": "application/json"
     }
+    url = ""
     
-    response = requests.get(
-        f"{settings.EVE_ESI_API_URL}/universe/structures/{structure_id}",
-        headers=headers
-    )
-    response = esi_call(response)
-    if response.status_code != 200:
-        response = requests.get(
-            f"{settings.EVE_ESI_API_URL}/universe/stations/{structure_id}",
-            headers=headers_station
-        )
+    if structure_id >= 100000000:
+        url = f"{settings.EVE_ESI_API_URL}/universe/structures/{structure_id}"
+        response = requests.get(url, headers=headers)
+        response = esi_call(response)
+    else:
+        url = f"{settings.EVE_ESI_API_URL}/universe/stations/{structure_id}"
+        response = requests.get(url, headers=headers_station)
         response = esi_call(response)
 
     return response.json()
