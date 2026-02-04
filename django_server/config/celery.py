@@ -44,7 +44,7 @@ app.conf.beat_schedule = {
     },
     'update_member_assets': {
         'task': 'corp.tasks.update_member_assets',
-        'schedule': 43200,
+        'schedule': 604800,
         'args': ()
     }
 }
