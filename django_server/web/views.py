@@ -4,6 +4,7 @@ from sso.models import EveCharater
 from doctrines.models import Doctrine, FitShip, Categories
 from ban.models import BannedCharacter, BanCategory, SuspiciousNotification
 from fats.models import Fats, FleetType, SRP, SRPShips, Fats_Character
+from corp.models import Asset
 from fats.views import create_fats, create_srp_request
 import esi.views as esi_views
 from django.utils import timezone
@@ -695,12 +696,6 @@ def groups_report(request):
 
 @login_required(login_url="/")
 def report_member_data(request):
-    class Asset():
-        def __init__(self, item_id, item_name, quantity):
-            self.item_id = item_id
-            self.item_name = item_name
-            self.quantity = quantity
-    
     class Transaction():
         def __init__(self, amount, balance, context, reason, ref_type, target, date):
             self.amount = amount
@@ -714,6 +709,7 @@ def report_member_data(request):
     if not request.user.groups.filter(name="Director").exists():
         return redirect("/dashboard/")
     
+    
     main_pj = EveCharater.objects.get(main=True, user_character=request.user)
     list_user = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
     list_characters = EveCharater.objects.exclude(characterName="Adjutora Helgast").all()
@@ -726,31 +722,9 @@ def report_member_data(request):
         char_id = int(request.POST.get("char", 0))
         option = int(request.POST.get("option", 0))
         char = EveCharater.objects.filter(id=char_id).first()
-        grouped_assets = {}
 
         if option == 1:
-            data = esi_views.character_assets(char)
-
-            for item in data:
-                type_id = item["type_id"]
-                quantity = item["quantity"]
-
-                if type_id not in grouped_assets:
-                    grouped_assets[type_id] = {
-                        "item_id": type_id,
-                        "item_name": esi_views.item_name(type_id),
-                        "quantity": quantity,
-                    }
-                else:
-                    grouped_assets[type_id]["quantity"] += quantity
-
-            assets = []
-            for data in grouped_assets.values():
-                assets.append(Asset(
-                    item_id=data["item_id"],
-                    item_name=data["item_name"],
-                    quantity=data["quantity"],
-                ))
+            list_assets = Asset.objects.filter(character = char)
 
             if "csv" in request.POST:
                 filename = f"assets_{char.characterName}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
@@ -758,10 +732,10 @@ def report_member_data(request):
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
                 writer = csv.writer(response)
-                writer.writerow(["Item ID", "Item Name", "Quantity"])
+                writer.writerow(["Item ID", "Item Name", "Quantity","Location_flag", "Location"])
 
-                for a in assets:
-                    writer.writerow([a.item_id, a.item_name, a.quantity])
+                for a in list_assets:
+                    writer.writerow([a.item.eve_id, a.item.name, a.quantity, a.loc_flag, a.location])
 
                 return response
 
@@ -770,7 +744,7 @@ def report_member_data(request):
                 "list_user": list_user,
                 "char": char,
                 "list_characters": list_characters,
-                "assets": assets,
+                "assets": list_assets,
                 "list_ref_types":list_ref_types
             })
 

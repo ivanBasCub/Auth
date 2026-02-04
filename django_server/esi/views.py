@@ -5,6 +5,7 @@ from sso.models import EveCharater
 from doctrines.models import FitShip
 from skillplans.models import Skillplan, Skillplan_CheckList
 from ban.models import SuspiciousNotification
+from utils.views import update_pages, handler
 from datetime import datetime
 import requests
 
@@ -227,7 +228,7 @@ def fit_list():
     return 0
 
 def item_data(item_id):
-    headers_2 = {
+    headers = {
         "Accept-Language": "",
         "If-None-Match": "",
         "X-Compatibility-Date": "2020-01-01",
@@ -235,7 +236,7 @@ def item_data(item_id):
         "Accept": "application/json"
     }
 
-    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_id}", headers = headers_2)
+    response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_id}", headers = headers)
     return response.json()
 
 def get_required_skills(type_id, visited=None):
@@ -431,12 +432,24 @@ def character_assets(char):
         "Accept": "application/json",
         "Authorization": f"Bearer {char.accessToken}"
     }
-    
-    response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/assets", headers=headers)
-    if response.status_code != 200:
-        return response.status_code
-    
-    return response.json()
+
+    url = f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/assets"
+
+    try:
+
+        assets = update_pages(
+            max_retries=3,
+            handler=handler,
+            url=url,
+            headers=headers
+        )
+        return assets
+
+    except requests.HTTPError as e:
+        return f"Error HTTP: {e.response.status_code}"
+    except Exception as e:
+        return f"Error inesperado: {str(e)}"
+
 
 def character_wallet_journal(char):
     headers = {
@@ -448,11 +461,22 @@ def character_wallet_journal(char):
         "Accept": "application/json",
         "Authorization": f"Bearer {char.accessToken}"
     }
-    response = requests.get(f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/wallet/journal/", headers=headers)
-    if response.status_code != 200:
-        return response.status_code
     
-    return response.json()
+    url = f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/wallet/journal/"
+    try:
+
+        wallet = update_pages(
+            max_retries=3,
+            handler=handler,
+            url=url,
+            headers=headers
+        )
+        return wallet
+
+    except requests.HTTPError as e:
+        return f"Error HTTP: {e.response.status_code}"
+    except Exception as e:
+        return f"Error inesperado: {str(e)}"
 
 def info_transfer_target_name(id):
     headers = {
@@ -473,3 +497,54 @@ def info_transfer_target_name(id):
         return f"Unknown ({id})"
 
     return data[0].get("name", f"Unknown ({id})")
+
+# Function obtain structures data
+def structure_data(character, structure_id):
+  
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-12-16",
+        "X-Tenant": "",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {character.accessToken}"
+    }
+    
+    headers_station = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-12-16",
+        "X-Tenant": "",
+        "If-Modified-Since": "",
+        "Accept": "application/json"
+    }
+    
+    response = requests.get(
+        f"{settings.EVE_ESI_API_URL}/universe/structures/{structure_id}",
+        headers=headers
+    )
+    if response.status_code != 200:
+        response = requests.get(
+            f"{settings.EVE_ESI_API_URL}/universe/stations/{structure_id}",
+            headers=headers_station
+        )
+
+    return response.json()
+
+def group_data(group_id):
+    headers = {
+        "Accept-Language": "",
+        "If-None-Match": "",
+        "X-Compatibility-Date": "2025-12-16",
+        "X-Tenant": "",
+        "If-Modified-Since": "",
+        "Accept": "application/json"
+    }
+    
+    url = f"{settings.EVE_ESI_API_URL}/universe/groups/{group_id}"
+    response = requests.get(url=url, headers=headers)
+    if response.status_code != 200:
+        return {}
+    
+    return response.json()
+    

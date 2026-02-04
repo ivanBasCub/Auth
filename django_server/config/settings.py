@@ -59,7 +59,9 @@ INSTALLED_APPS = [
     'fats',
     'groups',
     'skillplans',
-    'recruitment'
+    'recruitment',
+    'corp',
+    'utils'
 ]
 
 MIDDLEWARE = [

@@ -46,6 +46,11 @@ app.conf.beat_schedule = {
         'task': 'esi.tasks.refresh_skillplans',
         'schedule': 7200,
         'args': ()
+    },
+    'update_member_assets': {
+        'task': 'corp.tasks.update_member_assets',
+        'schedule': 43200,
+        'args': ()
     }
 }
 

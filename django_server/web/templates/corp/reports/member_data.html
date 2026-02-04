@@ -75,7 +75,7 @@
             <button class="btn active btn-primary">Exportar Assets a CSV</button>
         </form>
 
-        <div class="card col-12 col-md-6 bg-dark text-light my-1 mx-auto">
+        <div class="card col-12 col-md-10 bg-dark text-light my-1 mx-auto">
             <div class="card-header">
                 Asset Data
             </div>
@@ -85,6 +85,8 @@
                         <th></th>
                         <th>Item Name</th>
                         <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Location Flag</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,12 +94,14 @@
                     {% for asset in assets %}
                     <tr>
                         <td>
-                            <img class="item-icon" src="https://image.eveonline.com/Type/{{asset.item_id}}_32.png">
+                            <img class="item-icon" src="https://image.eveonline.com/Type/{{asset.item.eve_id}}_32.png">
                         </td>
                         <td>
-                            {{asset.item_name}}
+                            {{asset.item.name}}
                         </td>
                         <td>{{asset.quantity}}</td>
+                        <td>{{asset.location}}</td>
+                        <td>{{asset.loc_flag}}</td>
                     </tr>
                     {% endfor %}
                     {% endif %}
