@@ -14,7 +14,7 @@ def esi_call(response):
     if remaining < RATE_LIMIT_THRESHOLD:
         print(f"[RATE] Quedan pocos tokens ({remaining}). Pausando 15 minutos…")
         time.sleep(RATE_LIMIT_SLEEP)
-        print("[RATE] Descanso terminado, continuando…")
+        
 
     if response.status_code == 429:
         retry = int(response.headers.get("Retry-After", 10))
@@ -24,6 +24,7 @@ def esi_call(response):
     if response.status_code == 420:
         print("[RATE] Error 420 recibido. Pausando 15 minutos…")
         time.sleep(RATE_LIMIT_SLEEP)
+        print("[RATE] Descanso terminado, continuando…")
 
     if response.status_code == 401:
         print("[ERROR] Token inválido o sin permisos")
