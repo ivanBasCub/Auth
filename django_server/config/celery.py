@@ -42,11 +42,6 @@ app.conf.beat_schedule = {
         'schedule': 7200,
         'args': ()
     },
-    'update_member_assets': {
-        'task': 'corp.tasks.update_member_assets',
-        'schedule': 604800,
-        'args': ()
-    }
 }
 
 app.conf.timezone = 'Europe/Madrid'
