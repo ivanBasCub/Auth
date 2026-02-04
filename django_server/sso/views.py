@@ -239,14 +239,3 @@ def refresh_token(character):
 def eve_logout(request):
     logout(request)
     return redirect("/")
-
-def inactive_user():
-    limit_time = timezone.now() - timedelta(days=30)
-    inactive_group = Group.objects.get_or_create(name="Reserva Imperial")
-    list_pj = EveCharater.objects.filter(deleted=False, main=True).exclude(corpId=settings.CORP_ID).all()
-    
-    for pj in list_pj:
-        member = pj.user_character
-        member.groups.clear()
-        member.groups.add(inactive_group)
-        member.save()

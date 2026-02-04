@@ -3,32 +3,6 @@ from django.contrib.auth.models import User
 from sso.models import EveCharater
 from .models import Asset, Item, ItemGroup
 from esi.views import character_assets, item_data, group_data, structure_data
-import time
-
-def safe_character_assets(char, retries=3):
-    for attempt in range(retries):
-        data = character_assets(char)
-
-        if isinstance(data, str):
-            print(f"[WARN] character_assets devolvió error: {data}")
-
-            if "420" in data or "Rate limit" in data:
-                wait = 2 + attempt
-                print(f"[INFO] Esperando {wait}s por rate limit…")
-                time.sleep(wait)
-                continue
-
-            return None
-
-        if not isinstance(data, list):
-            print(f"[ERROR] character_assets devolvió algo inesperado: {data}")
-            return None
-        
-        return data
-
-    print(f"[ERROR] character_assets falló tras {retries} intentos para {char}")
-    return None
-
 
 @shared_task
 def update_member_assets():
@@ -45,7 +19,7 @@ def update_member_assets():
     existing_items = {i.eve_id: i for i in Item.objects.all()}
 
     for char in list_characters:
-        data_assets = safe_character_assets(char)
+        data_assets = character_assets(char)
 
         if not data_assets:
             print(f"[ERROR] No se pudieron obtener assets para {char}")

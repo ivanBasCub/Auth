@@ -11,6 +11,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User, Group
 import groups.views as groups_views
+from corp.views import update_member_asset
 from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
 from recruitment.models import Applications_access
@@ -724,6 +725,7 @@ def report_member_data(request):
         char = EveCharater.objects.filter(id=char_id).first()
 
         if option == 1:
+            update_member_asset(char_id)
             list_assets = Asset.objects.filter(character = char)
 
             if "csv" in request.POST:

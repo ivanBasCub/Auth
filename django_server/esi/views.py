@@ -5,7 +5,7 @@ from sso.models import EveCharater
 from doctrines.models import FitShip
 from skillplans.models import Skillplan, Skillplan_CheckList
 from ban.models import SuspiciousNotification
-from utils.views import update_pages, handler
+from utils.views import update_pages, handler, esi_call
 from datetime import datetime
 import requests
 
@@ -237,6 +237,7 @@ def item_data(item_id):
     }
 
     response = requests.get(f"{settings.EVE_ESI_API_URL}/universe/types/{item_id}", headers = headers)
+    response = esi_call(response)
     return response.json()
 
 def get_required_skills(type_id, visited=None):
@@ -436,7 +437,6 @@ def character_assets(char):
     url = f"{settings.EVE_ESI_API_URL}/characters/{char.characterId}/assets"
 
     try:
-
         assets = update_pages(
             max_retries=3,
             handler=handler,
@@ -523,11 +523,13 @@ def structure_data(character, structure_id):
         f"{settings.EVE_ESI_API_URL}/universe/structures/{structure_id}",
         headers=headers
     )
+    response = esi_call(response)
     if response.status_code != 200:
         response = requests.get(
             f"{settings.EVE_ESI_API_URL}/universe/stations/{structure_id}",
             headers=headers_station
         )
+        response = esi_call(response)
 
     return response.json()
 
@@ -543,8 +545,7 @@ def group_data(group_id):
     
     url = f"{settings.EVE_ESI_API_URL}/universe/groups/{group_id}"
     response = requests.get(url=url, headers=headers)
-    if response.status_code != 200:
-        return {}
+    response = esi_call(response)
     
     return response.json()
     
