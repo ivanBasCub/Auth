@@ -33,8 +33,8 @@ def esi_call(response):
 def handler(url, headers, page):
     params = {"page": page}
     response = requests.get(url, headers=headers, params=params)
-    print("URL:", response.url)
-    print("HEADERS:", response.headers)
+    print("[INFO] URL:", response.url)
+    print("[INFO] HEADERS:", response.headers)
     response = esi_call(response)
     return response
 
