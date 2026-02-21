@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 import sso.views as sso_views
 import web.views as web_views
 from django.conf import settings
@@ -31,25 +31,13 @@ urlpatterns = [
     path('auth/audit/', web_views.audit_account, name="audit"),
     path('auth/audit/skillplans/', web_views.skill_plan_checkers, name="skill_checker"),
     # Doctrinas y fiteos
-    path('auth/fittings/', web_views.fittings, name="list_fits"),
-    path('auth/fittings/doctrine/<int:doc_id>/', web_views.doctrine, name="info_doctrine"),
-    path('auth/fittings/fit/<int:fit_id>/', web_views.fit, name="fit_info"),
-    path('auth/fittings/admin/', web_views.admin_doctrines, name="admin fittings"),
-    path('auth/fittings/admin/doctrine/add/', web_views.add_doctrine, name="new_doctrine"),
-    path('auth/fittings/admin/doctrine/mod/<int:doctrine_id>/', web_views.mod_doctrine, name="mod_doctrine"),
-    path('auth/fittings/admin/doctrine/del/<int:doctrine_id>/', web_views.del_doctrine, name="del_doctrine"),
-    path('auth/fittings/admin/category/add/', web_views.add_category, name="new_category"),
-    path('auth/fittings/admin/category/mod/<int:category_id>/', web_views.mod_category, name="mod_category"),
-    path('auth/fittings/admin/category/del/<int:category_id>/', web_views.del_category, name="del_category"),
-    path('auth/fittings/fit/mod/<int:fit_id>/', web_views.mod_fit, name="mod_fit"),
+    path('auth/doctrine/', include('doctrines.urls')),
     # CORP
+    # Ban Feature
+    path("auth/corp/ban/", include("ban.urls")),
+    
+    
     ## Zona de administración de corp
-    path('auth/corp/banlist/', web_views.banlist, name="banlist"),
-    path('auth/corp/ban/add/', web_views.add_ban, name="add_ban"),
-    path('auth/corp/ban/del/<int:ban_id>/', web_views.del_ban, name="del_ban"),
-    path('auth/corp/banlist/categories/', web_views.ban_categories, name="ban_categories"),
-    path('auth/corp/ban/category/add/', web_views.add_ban_category, name="add_ban_category"),
-    path('auth/corp/ban/category/del/<int:category_id>/', web_views.del_ban_category, name="del_ban_category"),
     path('auth/corp/admin/users/', web_views.user_control_list, name="control-users"),
     ## Reports
     path('auth/corp/reports/show/1/', web_views.report_members_list, name="member_report"),

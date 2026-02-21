@@ -13,8 +13,8 @@
                     <div class="card-header">
                         <div class="card-title mb-0">Categorias de Baneos
                             <div class="float-end">
-                                <a href="/auth/corp/banlist/" class="btn btn-danger btn-sm">Ban List</a>
-                                <a href="/auth/corp/ban/category/add/" class="btn btn-sm btn-danger"><i
+                                <a href="/auth/corp/ban/list/" class="btn btn-danger btn-sm">Ban List</a>
+                                <a href="/auth/corp/ban/list/category/add/" class="btn btn-sm btn-danger"><i
                                         class="bi bi-plus-circle"></i></a>
                             </div>
                         </div>
@@ -31,7 +31,7 @@
                                 {% for category in categories %}
                                 <tr>
                                     <td>{{category.name}}</td>
-                                    <td class="d-flex justify-content-end"><a href="/auth/corp/ban/category/del/{{category.id}}" class="btn btn-danger">Borrar</a></td>
+                                    <td class="d-flex justify-content-end"><a href="/auth/corp/ban/list/category/del/{{category.id}}" class="btn btn-danger">Borrar</a></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

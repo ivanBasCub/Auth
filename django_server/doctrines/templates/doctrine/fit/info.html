@@ -47,7 +47,7 @@
                                 <ul>
                                     {% for doctrine in fit.fitDoctrine.all %}
                                     <li>
-                                        <a href="/auth/fittings/doctrine/{{doctrine.id}}">{{doctrine.doctitle}}</a>
+                                        <a href="/auth/doctrine/{{doctrine.id}}">{{doctrine.doctitle}}</a>
                                     </li>
                                     {% endfor %}
                                 </ul>
@@ -137,7 +137,7 @@
                         <div class="card-title mb-0">Equipamiento
                             {% if user|has_group:"MainFC" %}
                             <div class="float-end">
-                                <a href="/auth/fittings/fit/mod/{{fit.id}}" class="btn btn-sm btn-danger"><i class="bi bi-pencil-fill"></i></a>
+                                <a href="/auth/doctrine/fit/edit/{{fit.id}}" class="btn btn-sm btn-danger"><i class="bi bi-pencil-fill"></i></a>
                             </div>
                             {% endif %}
                         </div>

@@ -38,13 +38,13 @@
                             Flotas
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/fittings/">Doctrinas</a></li>
+                            <li><a class="dropdown-item" href="/auth/doctrine/list/">Doctrinas</a></li>
                             <li><a class="dropdown-item" href="/auth/fats/list/">Segimiento de Flotas</a></li>
                             {% if user|has_group:"FC" %}
                                 <li><a class="dropdown-item" href="/auth/fats/add/">Fats</a></li>
                             {% endif %}
                             {% if user|has_group:"MainFC" %}
-                                <li><a class="dropdown-item" href="/auth/fittings/admin/">Organizar Doctrinas</a></li>
+                                <li><a class="dropdown-item" href="/auth/doctrine/admin/">Organizar Doctrinas</a></li>
                             {% endif %}
                             <li><a class="dropdown-item" href="/auth/srp/">SRP</a></li>
                         </ul>
@@ -89,7 +89,7 @@
                             Corp
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/auth/corp/banlist">Lista de baneos</a></li>
+                            <li><a class="dropdown-item" href="/auth/corp/ban/list/">Lista de baneos</a></li>
                             <li><a class="dropdown-item" href="/auth/corp/reports/show/1/">Reportes</a></li>
                             <li><a class="dropdown-item" href="/auth/corp/suspiciuos/notifications/">Lista de movimientos sospechosos</a></li>
                             <li><a href="/auth/corp/admin/users/" class="dropdown-item">Administración de usuarios</a></li>
