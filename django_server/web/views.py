@@ -1,17 +1,14 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
-from doctrines.models import Doctrine, FitShip, Categories
-from ban.models import BannedCharacter, BanCategory, SuspiciousNotification
-from fats.models import Fats, FleetType, SRP, SRPShips, Fats_Character
+from ban.models import BannedCharacter, SuspiciousNotification
+from fats.models import  SRP, SRPShips, Fats_Character
 from corp.models import Asset
-from fats.views import create_fats, create_srp_request
+from fats.views import create_srp_request
 import esi.views as esi_views
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User, Group
-import groups.views as groups_views
-from groups.models import GroupNotifications
 from skillplans.models import Skillplan, Skillplan_CheckList
 from recruitment.models import Applications_access
 from django.conf import settings
@@ -175,55 +172,6 @@ def skill_plan_checkers(request):
         "list_pj": list_pj,
         "checklist" : checklist
     })
-
-
-### FATS
-
-#### View FAT list
-@login_required(login_url="/")
-def fat_list(request):
-    limit_30_days = timezone.now() - timedelta(days=30)
-
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
-    main_pj = list_pj.filter(main=True).first()
-    fats = Fats.objects.filter(date__gte = limit_30_days).order_by('date').all()
-    fat_list = Fats_Character.objects.filter(fat__in = fats, character__in = list_pj).all()
-
-    return render(request, "fat/fatlist.html",{
-        "main_pj" : main_pj,
-        "list_pj" : list_pj,
-        "fats" : fat_list
-    })
-
-#### Create FAT
-@login_required(login_url="/")
-def add_fat(request):
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
-    main_pj = list_pj.filter(main=True).first()
-    doctrines = Doctrine.objects.all()
-    fleet_types = FleetType.objects.all()
-
-    if request.method == "POST":
-        pj_id = int(request.POST.get("fc",0).strip())
-        doctrine_id = int(request.POST.get("doctrine",0).strip())
-        fleet_type_id = int(request.POST.get("type",0).strip())
-        fleet_name = request.POST.get("name","").strip()
-
-        if pj_id != 0 and doctrine_id != 0 and fleet_type_id != 0 and fleet_name != "":
-            try:
-                create_fats(pj_id, doctrine_id, fleet_type_id, fleet_name)
-            except Exception as e:
-                print("Error creating fats:", e)
-
-        return redirect("/auth/fats/list/")
-    else:
-        return render(request, "fat/addFat.html",{
-            "main_pj" : main_pj,
-            "list_pj" : list_pj,
-            "fleet_types" : fleet_types,
-            "doctrines" : doctrines
-        })
-
 ## CORP
 
 ### SUSPICIOUS TRANSFERENCES
@@ -553,64 +501,6 @@ def user_control_list(request):
     return render(request, "corp/user/index.html",{
         "main_pj": main_pj,
         "list_main": list_mains
-    })
-
-## GROUPS
-
-### View groups list
-@login_required(login_url="/")
-def group_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    groups = Group.objects.exclude(name__in= ["Miembro","Reserva Imperial"]).all()
-    notification_list = GroupNotifications.objects.filter(user = request.user).all()
-
-    if request.method == "POST":
-        group_id = int(request.POST.get("group_id",0).strip())
-        user_id = int(request.POST.get("user_id",0).strip())
-        status = int(request.POST.get("status",0).strip())
-        if status == 0:
-            groups_views.create_notification(group_id, user_id, status)
-        else:
-            remove_group = Group.objects.get(id = group_id)
-            user = User.objects.get(id = user_id)
-            user.groups.remove(remove_group)
-            user.save()
-            
-
-    for group in groups:
-        notification = GroupNotifications.objects.filter(group = group)
-        if notification.exists():
-            group.notification = True
-
-    return render(request, "group/listGroups.html", {
-        "main_pj": main_pj,
-        "groups" : groups,
-        "notification_list": notification_list
-    })
-
-### View group application list
-@login_required(login_url="/")
-def group_nofitication_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    list_notifications = GroupNotifications.objects.all()
-
-    if request.method == "POST":
-        noti_id = int(request.POST.get("noti_id",0).strip())
-        action = int(request.POST.get("action",0).strip())
-
-        notification = GroupNotifications.objects.get(id=noti_id)
-
-        if action == 1:
-            user = notification.user.first()
-            group = notification.group.first()
-            user.groups.add(group)
-            user.save()
-
-        notification.delete()
-
-    return render(request, "group/listGroupsNotifications.html",{
-        "main_pj": main_pj,
-        "list_notifications" : list_notifications
     })
 
 ## SKILLPLANS

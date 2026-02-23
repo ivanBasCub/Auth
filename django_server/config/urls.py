@@ -32,11 +32,13 @@ urlpatterns = [
     path('auth/audit/skillplans/', web_views.skill_plan_checkers, name="skill_checker"),
     # Doctrinas y fiteos
     path('auth/doctrine/', include('doctrines.urls')),
+    # Fats
+    path('auth/fats/', include('fats.urls')),
     # CORP
     # Ban Feature
     path("auth/corp/ban/", include("ban.urls")),
-    
-    
+    # Groups
+    path('auth/corp/groups/', include('groups.urls')),
     ## Zona de administración de corp
     path('auth/corp/admin/users/', web_views.user_control_list, name="control-users"),
     ## Reports
@@ -45,12 +47,6 @@ urlpatterns = [
     path('auth/corp/reports/show/3/', web_views.skillplan_reports, name="fats_report"),
     path('auth/corp/reports/show/4/', web_views.groups_report, name="groups_report"),
     path('auth/corp/reports/show/5/', web_views.report_member_data, name="member_data_report"),
-    # Zona de Fats
-    path('auth/fats/list/', web_views.fat_list, name="fat_list"),
-    path('auth/fats/add/', web_views.add_fat, name="add_fat"),
-    # Groups
-    path('auth/groups/', web_views.group_list, name="group-list"),
-    path('auth/group/management/requests/', web_views.group_nofitication_list, name="list-group-notifications"),
     # Skillplan
     path('auth/admin/skillplans/', web_views.skill_plan_list, name="list-skillplans"),
     path('auth/admin/skillplans/add/', web_views.add_skill_plan, name="add-skillplans"),

@@ -55,9 +55,9 @@
                             Grupos
                         </a>    
                         <ul class="dropdown-menu">
-                            <li><a href="/auth/groups/" class="dropdown-item">Lista de Grupos</a></li>
+                            <li><a href="/auth/corp/groups/" class="dropdown-item">Lista de Grupos</a></li>
                             {% if user|has_group:"Director" %}
-                                <li><a href="/auth/group/management/requests/" class="dropdown-item">Gestionar Grupos</a></li>
+                                <li><a href="/auth/corp/groups/requests/" class="dropdown-item">Gestionar Grupos</a></li>
                             {% endif %}
                         </ul>
                     </li>
