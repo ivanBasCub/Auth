@@ -1,17 +1,77 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from sso.models import EveCharater
+from .models import Skillplan, Skillplan_CheckList
+from .utils import tranfer_skills
 
-# Create your views here.
-def tranfer_skills(skills):
-    skills_dict = {}
-    for linea in skills.strip().splitlines():
-        if linea.strip():
-            *nombre, nivel = linea.strip().split()
-            nombre_skill = " ".join(nombre)
-            nivel = int(nivel)
-            # Si ya existe, guardamos el nivel más alto
-            if nombre_skill in skills_dict:
-                skills_dict[nombre_skill] = max(skills_dict[nombre_skill], nivel)
-            else:
-                skills_dict[nombre_skill] = nivel
+# Skillplan views
 
-    return skills_dict
+# List of skillplans
+@login_required(login_url="/")
+def skill_plan_list(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_skillplans = Skillplan.objects.all()
+
+    return render(request, "audit/skills/admin.html",{
+        "main_pj" : main_pj,
+        "skillplans" : list_skillplans
+    })
+    
+# Add a skillplan
+@login_required(login_url="/")
+def add_skill_plan(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        name = request.POST.get("name","").strip()
+        desc = request.POST.get("desc","").strip()
+        skills = request.POST.get("skills","").strip()
+
+        skills_dict = tranfer_skills(skills)
+
+        skill_plan = Skillplan.objects.create(
+            name = name,
+            desc = desc,
+            skills = skills_dict
+        )
+        skill_plan.save()
+
+        return redirect("/auth/admin/skillplans/")
+    else:
+        return render(request, "audit/skills/addskillplan.html",{
+            "main_pj" : main_pj
+        })
+
+# Modify a skillplan
+@login_required(login_url="/")
+def edit_skill_plan(request, skillplanid):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    sp = Skillplan.objects.get(id = skillplanid)
+
+    if request.method == "POST":
+        name = request.POST.get("name","").strip()
+        desc = request.POST.get("desc","").strip()
+        skills = request.POST.get("skills","").strip()
+
+        if skills != "":
+            skills_dict = tranfer_skills(skills)
+            sp.skills = skills_dict
+        
+        sp.name = name
+        sp.desc = desc
+        sp.save()
+
+        return redirect("/auth/admin/skillplans/")
+
+    return render(request, "audit/skills/modskillplan.html",{
+        "main_pj" : main_pj,
+        "sp": sp
+    })
+    
+# Delete a skillplan
+@login_required(login_url="/")
+def del_skill_plan(request, skillplanid):
+    sp = Skillplan.objects.get(id = skillplanid)
+    checklist = Skillplan_CheckList.objects.filter(skillPlan = sp).delete()
+    sp.delete()
+    return redirect("/auth/admin/skillplans/")

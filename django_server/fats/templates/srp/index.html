@@ -42,7 +42,7 @@
                             </td>
                             <td class="col">
                                 <div class="badge bg-info">
-                                    <a href="/auth/srp/{{srp.srp_id}}/request/" class="btn btn-sm {% if srp.status != 0 %} disabled {% endif %}">{{srp.srp_id}}</a>
+                                    <a href="/auth/fats/srp/{{srp.srp_id}}/request/" class="btn btn-sm {% if srp.status != 0 %} disabled {% endif %}">{{srp.srp_id}}</a>
                                 </div>
                             </td>
                             <td class="col">
@@ -66,11 +66,11 @@
                             </td>
                             <td class="col">
                                 {% if user|has_group:"MainFC" %}
-                                <a href="/auth/srp/{{srp.srp_id}}/admin/" class="btn btn-danger btn-sm">
+                                <a href="/auth/fats/srp/{{srp.srp_id}}/admin/" class="btn btn-danger btn-sm">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 {% endif %}
-                                <a href="/auth/srp/{{srp.srp_id}}/view/" class="btn btn-info btn-sm">
+                                <a href="/auth/fats/srp/{{srp.srp_id}}/view/" class="btn btn-info btn-sm">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>

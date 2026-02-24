@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from sso.models import EveCharater
 from django.utils import timezone
 from .models import BanCategory, BannedCharacter
-from web.utils import create_csv
+from utils.views import create_csv
 
 # LIST OF BANNED CHARACTERS
 @login_required(login_url="/")

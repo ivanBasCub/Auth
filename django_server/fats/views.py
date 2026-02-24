@@ -2,154 +2,14 @@ from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.conf import settings
+from .utils import create_fats
 from sso.models import EveCharater
-from esi.views import item_name, solar_system_name
 from doctrines.models import Doctrine
-from .models import Fats, FleetType, SRP, SRPShips, Fats_Character
-import requests
-import random
-import string
+from .models import Fats, FleetType, Fats_Character, SRP, SRPShips
+from .utils import create_srp_request
+from utils.views import format_number
 
-# Funtions
-def create_srp_id(length = 10):
-    characters = string.ascii_lowercase + string.digits
-    return ''.join(random.choices(characters, k=length))
-
-
-def create_fats(characterId, doctrineId, fleetTypeId, fleetName):
-    character = EveCharater.objects.get(characterId = characterId)
-    doctrine = Doctrine.objects.get(id = doctrineId)
-    fleetType = FleetType.objects.get(id = fleetTypeId)
-
-    headers = {
-        "Accept-Language": "",
-        "If-None-Match": "",
-        "X-Compatibility-Date": "2020-01-01",
-        "X-Tenant": "",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {character.accessToken}"
-    }
-
-    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/fleet', headers= headers)
-
-    if response.status_code == 200:
-        data_fc = response.json()
-        if character.characterId == data_fc["fleet_boss_id"]:
-            response = requests.get(f'{settings.EVE_ESI_API_URL}/fleets/{data_fc["fleet_id"]}/members', headers= headers)
-            
-            if response.status_code == 200:
-                # Creación de Fat
-                fat = Fats.objects.create(
-                    name = fleetName,
-                    characterFC = character,
-                    fleetType = fleetType,
-                    doctrine = doctrine,
-                )
-                fat.save()
-
-                # Creación de SRP
-                srp_id = create_srp_id()
-                new_srp = SRP.objects.create(
-                    srp_id = srp_id,
-                    status = 0,
-                    srp_cost = 0,
-                    fleet = fat
-                )
-                new_srp.save()
-
-                data_members = response.json()
-                print(data_members)
-                for member in data_members:
-                    character = EveCharater.objects.get(characterId = member["character_id"])
-
-                    if character:
-                        fat_user = Fats_Character.objects.create(
-                            fat = fat,
-                            character = character,
-                            ship = item_name(member["ship_type_id"]),
-                            solarSystem = solar_system_name(member["solar_system_id"])
-                        )
-
-                        fat_user.save()
-
-    
-def create_srp_request(zkill_id, srp):
-
-    # URL = https://zkillboard.com/api/kills/killID/129938002/
-    headers_zkill = {"Accept-Encoding": "gzip"}
-    headers_eve = {
-        "Accept-Language": "",
-        "If-None-Match": "",
-        "X-Compatibility-Date": "2025-08-26",
-        "X-Tenant": "",
-        "Accept": "application/json"
-    }
-
-    res_zkill = requests.get(f"{settings.ZKILL_API_URL}/kills/killID/{zkill_id}/", headers_zkill)
-    if res_zkill.status_code != 200:
-        return -1
-    
-    data_zkill = res_zkill.json()
-    zkill_hash = data_zkill[0]['zkb']['hash']
-    if zkill_hash == "":
-        return -2
-    
-    res_eve = requests.get(f"{settings.EVE_ESI_API_URL}/killmails/{zkill_id}/{zkill_hash}", headers_eve)
-    if res_eve.status_code != 200:
-        return -1
-    
-    data_eve = res_eve.json()
-
-    res_insurance = requests.get(f"{settings.EVE_ESI_API_URL}/insurance/prices", headers_eve)
-    if res_insurance.status_code != 200:
-        return -1
-
-    insurance_list = res_insurance.json()
-    
-    # Create data
-    pilot_id = data_eve["victim"]["character_id"]
-    ship_id = data_eve["victim"]["ship_type_id"]
-    try:
-        pilot = EveCharater.objects.get(characterId = pilot_id)
-    except EveCharater.DoesNotExist:
-        return -3
-    
-    ship_name = item_name(ship_id)
-    zkill_value = data_zkill[0]['zkb']['totalValue']
-    insurance_value = 0
-    for insurance in insurance_list:
-        if insurance["type_id"] == ship_id:
-            for level in insurance["levels"]:
-                if level["name"] == "Platinum":
-                    insurance_value = level["payout"]
-                    break
-
-    roam = FleetType.objects.get(name = "Roam")
-    if srp.fleet.fleetType == roam:
-        srp_cost = (zkill_value - insurance_value)* 0.5
-        if srp_cost > 200_000_000:
-            srp_cost = 200_000_000
-    else:
-        srp_cost = zkill_value - insurance_value
-
-    new_srp_ship = SRPShips.objects.create(
-        pilot = pilot,
-        zkill_id = zkill_id,
-        ship_id = ship_id,
-        ship_name = ship_name,
-        srp = srp,
-        zkill_value = zkill_value,
-        srp_cost = srp_cost,
-        status = 0
-    )
-    new_srp_ship.save()
-
-    srp.srp_cost += srp_cost
-    srp.save()
-    return 0
-
-# Views
+# Views Fats Feature
 
 ## USER VIEWS
 
@@ -197,3 +57,99 @@ def add_fat(request):
             "fleet_types" : fleet_types,
             "doctrines" : doctrines
         })
+
+# Views to SRP System
+
+## USER VIEW
+
+### Index SRP
+@login_required(login_url="/")
+def srp_index(request):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    list_srp = SRP.objects.all()
+    total_cost = 0
+    for srp in list_srp:
+        total_cost += srp.srp_cost
+        srp.srp_cost = format_number(srp.srp_cost)
+        srp.pending_requests = SRPShips.objects.filter(srp = srp, status = 0).count()
+
+    total_cost = format_number(total_cost)
+
+    return render(request,"srp/index.html",{
+        "main_pj" : main_pj,
+        "total_cost" : total_cost,
+        "list_srp": list_srp
+    })
+
+### Request SRP
+@login_required(login_url="/")
+def srp_request(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    srp = SRP.objects.get(srp_id = srp_id)
+    
+    if request.method == "POST":
+        zkill_link = request.POST.get("zkill","").strip()
+        if zkill_link != "":
+            zkill_id = zkill_link.strip("/").split("/")[-1]
+            create_srp_request(zkill_id, srp)
+
+            return redirect(f"/auth/fats/srp/{srp_id}/view/")
+
+    return render(request,"srp/request.html",{
+        "main_pj" : main_pj,
+        "srp" : srp
+    })
+    
+### View SRP
+@login_required(login_url="/")
+def srp_view(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    srp = SRP.objects.get(srp_id = srp_id)
+    list_srp_ships = SRPShips.objects.filter(srp = srp).all()
+    lost_count = list_srp_ships.count()
+    
+    srp.srp_cost = format_number(srp.srp_cost)
+    return render(request,"srp/view.html",{
+        "main_pj" : main_pj,
+        "list_srp_ships" : list_srp_ships,
+        "lost_count" : lost_count,
+        "srp" : srp
+    })
+    
+### Admin SRP
+@login_required(login_url="/")
+def srp_admin(request, srp_id):
+    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+
+    if request.method == "POST":
+        status = 0
+        srp_request_id = 0
+        srp_status = 0
+
+        if "status" in request.POST:
+            status = int(request.POST.get("status",0).strip())
+            srp_request_id = int(request.POST.get("srp_request",0).strip())
+        elif "srp_status" in request.POST:
+            srp_status = int(request.POST.get("srp_status",0).strip())
+        
+        if srp_request_id != 0:
+            srp_request = SRPShips.objects.get(id = srp_request_id)
+            srp_request.status = status
+            srp_request.save()
+
+        if srp_status != 0:
+            srp = SRP.objects.get(srp_id = srp_id)
+            srp.status = srp_status
+            srp.save()
+
+            return redirect("/auth/fats/srp/")
+
+    srp = SRP.objects.get(srp_id = srp_id)
+    list_srp_ships = SRPShips.objects.filter(srp = srp, status = 0).all()
+    check_srp_list = SRPShips.objects.filter(srp = srp).exclude(status = 0).all()
+
+    return render(request,"srp/admin.html",{
+        "main_pj" : main_pj,
+        "list_srp_ships" : list_srp_ships,
+        "check_srp_list" : check_srp_list
+    })
