@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from skillplans.models import Skillplan, Skillplan_CheckList
 from recruitment.models import Applications_access
 from utils.views import format_number, check_skill
@@ -17,7 +17,7 @@ def index(request):
 ## DASHBOARD
 @login_required(login_url='/')
 def dashboard(request):
-    list_pjs = EveCharater.objects.filter(user_character = request.user).all()
+    list_pjs = Eve_Character.objects.filter(user = request.user).all()
 
     main_pj = list_pjs.filter(main=True).first()
     list_alts = list_pjs.filter(main=False).all()
@@ -44,19 +44,19 @@ def change_main(request):
         token_id = int(request.POST.get("token",0))
 
         if token_id != 0:
-            new_main = EveCharater.objects.get(id = token_id)
-            main_pj = EveCharater.objects.filter(user_character = request.user, main = True).first()
+            new_main = Eve_Character.objects.get(id = token_id)
+            main_pj = Eve_Character.objects.filter(user = request.user, main = True).first()
             main_pj.main = False
             main_pj.save()
             new_main.main = True
             new_main.save()
 
-            request.user.username = new_main.characterName.replace(" ","_")
+            request.user.username = new_main.character_name.replace(" ", "_")
             request.user.save()
 
             return redirect("/auth/dashboard")
 
-    list_pjs = EveCharater.objects.filter(user_character = request.user).all()
+    list_pjs = Eve_Character.objects.filter(user = request.user).all()
     main_pj = list_pjs.filter(main=True).first()
 
     return render(request, "audit/main.html",{
@@ -69,17 +69,17 @@ def change_main(request):
 ### Eve Characters List
 @login_required(login_url='/')
 def audit_account(request):
-    list_pjs = EveCharater.objects.filter(user_character = request.user).all()
+    list_pjs = Eve_Character.objects.filter(user = request.user).all()
 
     main_pj = list_pjs.filter(main=True).first()
     isk_total = 0
     skill_points_total = 0
 
     for pj in list_pjs:
-        isk_total+= pj.walletMoney
-        skill_points_total += pj.totalSkillPoints
-        pj.walletMoney = format_number(pj.walletMoney)
-        pj.totalSkillPoints = format_number(pj.totalSkillPoints)
+        isk_total+= pj.money
+        skill_points_total += pj.skill_points
+        pj.money = format_number(pj.money)
+        pj.skill_points = format_number(pj.skill_points)
 
     isk_total = format_number(isk_total)
     skill_points_total = format_number(skill_points_total)
@@ -95,7 +95,7 @@ def audit_account(request):
 @login_required(login_url="/")
 def skill_plan_checkers(request):
 
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    list_pj = Eve_Character.objects.filter(user = request.user).all()
     main_pj = list_pj.filter(main = True).first()
     skillplan_list = Skillplan.objects.all()
 

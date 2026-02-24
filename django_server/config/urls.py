@@ -30,7 +30,7 @@ urlpatterns = [
     path('sso/', include('sso.urls')),
     # Doctrine and fits
     path('auth/doctrine/', include('doctrines.urls')),
-    # Fats
+    # Fleet
     path('auth/fats/', include('fats.urls')),
     # Ban
     path("auth/corp/ban/", include("ban.urls")),

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from .models import Applications_access
 from utils.views import format_number
 from django.contrib.auth.models import User, Group
@@ -10,7 +10,7 @@ from django.contrib.auth.models import User, Group
 ## Old user create request
 @login_required(login_url="/")
 def applications_request(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
 
     if request.method == "POST":
         msg = request.POST.get("msg",0).strip()
@@ -44,7 +44,7 @@ def applications_request(request):
 # View Access Applications
 @login_required(login_url="/")
 def applications_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_applications = Applications_access.objects.all()
     for application in list_applications:
         application.totalSP = format_number(application.totalSP)
@@ -57,7 +57,7 @@ def applications_list(request):
 ## View list of ex-members
 @login_required(login_url="/")
 def frigde(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_mains = User.objects.filter(groups__name = "Miembro").all()
     list_mains = list_mains.exclude(username = "Adjutora_Helgast").all()
 

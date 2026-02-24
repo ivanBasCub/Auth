@@ -1,7 +1,6 @@
 from django.contrib import admin
-from .models import BannedCharacter, BanCategory, SuspiciousNotification
+from .models import Character, Category
 
 # Register your models here.
-admin.site.register(BannedCharacter)
-admin.site.register(BanCategory)
-admin.site.register(SuspiciousNotification)
+admin.site.register(Character)
+admin.site.register(Category)

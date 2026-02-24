@@ -1,7 +1,7 @@
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from esi.views import item_name, solar_system_name
 from doctrines.models import Doctrine
-from .models import Fats, FleetType, SRP, SRPShips, Fats_Character
+from .models import Fleet, FleetType, SRP, SRP_Ship, Fat_Character
 import requests
 import random
 import string
@@ -14,7 +14,7 @@ def create_srp_id(length = 10):
 
 
 def create_fats(characterId, doctrineId, fleetTypeId, fleetName):
-    character = EveCharater.objects.get(characterId = characterId)
+    character = Eve_Character.objects.get(character_id = characterId)
     doctrine = Doctrine.objects.get(id = doctrineId)
     fleetType = FleetType.objects.get(id = fleetTypeId)
 
@@ -24,21 +24,21 @@ def create_fats(characterId, doctrineId, fleetTypeId, fleetName):
         "X-Compatibility-Date": "2020-01-01",
         "X-Tenant": "",
         "Accept": "application/json",
-        "Authorization": f"Bearer {character.accessToken}"
+        "Authorization": f"Bearer {character.access_token}"
     }
 
-    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.characterId}/fleet', headers= headers)
+    response = requests.get(f'{settings.EVE_ESI_API_URL}/characters/{character.character_id}/fleet', headers= headers)
 
     if response.status_code == 200:
         data_fc = response.json()
-        if character.characterId == data_fc["fleet_boss_id"]:
+        if character.character_id == data_fc["fleet_boss_id"]:
             response = requests.get(f'{settings.EVE_ESI_API_URL}/fleets/{data_fc["fleet_id"]}/members', headers= headers)
             
             if response.status_code == 200:
                 # Creación de Fat
-                fat = Fats.objects.create(
+                fat = Fleet.objects.create(
                     name = fleetName,
-                    characterFC = character,
+                    character_FC_name = character.character_name,
                     fleetType = fleetType,
                     doctrine = doctrine,
                 )
@@ -55,12 +55,11 @@ def create_fats(characterId, doctrineId, fleetTypeId, fleetName):
                 new_srp.save()
 
                 data_members = response.json()
-                print(data_members)
                 for member in data_members:
-                    character = EveCharater.objects.get(characterId = member["character_id"])
+                    character = Eve_Character.objects.get(character_id = member["character_id"])
 
                     if character:
-                        fat_user = Fats_Character.objects.create(
+                        fat_user = Fat_Character.objects.create(
                             fat = fat,
                             character = character,
                             ship = item_name(member["ship_type_id"]),
@@ -107,8 +106,8 @@ def create_srp_request(zkill_id, srp):
     pilot_id = data_eve["victim"]["character_id"]
     ship_id = data_eve["victim"]["ship_type_id"]
     try:
-        pilot = EveCharater.objects.get(characterId = pilot_id)
-    except EveCharater.DoesNotExist:
+        pilot = Eve_Character.objects.get(character_id = pilot_id)
+    except Eve_Character.DoesNotExist:
         return -3
     
     ship_name = item_name(ship_id)
@@ -122,15 +121,15 @@ def create_srp_request(zkill_id, srp):
                     break
 
     roam = FleetType.objects.get(name = "Roam")
-    if srp.fleet.fleetType == roam:
+    if srp.fleet.type == roam:
         srp_cost = (zkill_value - insurance_value)* 0.5
         if srp_cost > 200_000_000:
             srp_cost = 200_000_000
     else:
         srp_cost = zkill_value - insurance_value
 
-    new_srp_ship = SRPShips.objects.create(
-        pilot = pilot,
+    new_srp_ship = SRP_Ship.objects.create(
+        character = pilot,
         zkill_id = zkill_id,
         ship_id = ship_id,
         ship_name = ship_name,

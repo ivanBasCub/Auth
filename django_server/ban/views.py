@@ -1,16 +1,16 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from django.utils import timezone
-from .models import BanCategory, BannedCharacter
+from .models import Category, Character
 from utils.views import create_csv
 
 # LIST OF BANNED CHARACTERS
 @login_required(login_url="/")
 def banlist(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    banlist = BannedCharacter.objects.all()
-    categories = BanCategory.objects.all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    banlist = Character.objects.all()
+    categories = Category.objects.all()
     
     if request.method == "POST":
         if "csv" in request.POST:
@@ -19,7 +19,7 @@ def banlist(request):
             for ban in banlist:
                 list_data.append(
                     [
-                        ban.character_name,
+                        ban.character.character_name,
                         ban.reason,
                         ban.ban_category.name if ban.ban_category else "uncategorized",
                         ban.banned_by.username.replace('_',' '),
@@ -38,22 +38,22 @@ def banlist(request):
     
 @login_required(login_url="/")
 def add_ban(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    list_pjs = EveCharater.objects.filter(main = True).all()
-    list_categories = BanCategory.objects.all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    list_pjs = Eve_Character.objects.filter(main = True).all()
+    list_categories = Category.objects.all()
 
     if request.method == "POST":
         pj_id = int(request.POST.get("character_id",0).strip())
         reason = request.POST.get("reason","").strip()
-        pj = EveCharater.objects.filter(characterId = pj_id).first()
+        pj = Eve_Character.objects.filter(character_id = pj_id).first()
         category_id = int(request.POST.get("ban_category",0).strip())
-        category = BanCategory.objects.filter(id = category_id).first()
+        category = Category.objects.filter(id = category_id).first()
 
         if pj_id != 0 and reason != "":
             try:
-                new_ban = BannedCharacter(character_id = pj_id, character_name = pj.characterName, reason = reason, banned_by = request.user, ban_category = category)
+                new_ban = Character(character = pj, reason = reason, banned_by = request.user, ban_category = category)
                 new_ban.save()
-            except EveCharater.DoesNotExist:
+            except Eve_Character.DoesNotExist:
                 pass
 
         return redirect("/auth/corp/ban/list/")
@@ -67,18 +67,18 @@ def add_ban(request):
 @login_required(login_url="/")
 def del_ban(request, ban_id):
     try:
-        ban = BannedCharacter.objects.get(id=ban_id)
+        ban = Character.objects.get(id=ban_id)
         ban.delete()
-    except BannedCharacter.DoesNotExist:
+    except Character.DoesNotExist:
         pass
 
     return redirect("/auth/corp/ban/list/")
 
-#### List Ban Categories
+#### List Ban Category
 @login_required(login_url="/")
 def ban_categories(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    categories = BanCategory.objects.all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    categories = Category.objects.all()
 
     return render(request, "ban/category/index.html",{
         "main_pj" : main_pj,
@@ -88,13 +88,13 @@ def ban_categories(request):
 #### Add Ban Cateogory
 @login_required(login_url="/")
 def add_ban_category(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
 
     if request.method == "POST":
         category_name = request.POST.get("categoryName","").strip()
 
         if category_name != "":
-            new_category = BanCategory(name=category_name)
+            new_category = Category(name=category_name)
             new_category.save()
 
         return redirect("/auth/corp/ban/list/category/")
@@ -108,10 +108,10 @@ def add_ban_category(request):
 @login_required(login_url="/")
 def del_ban_category(request, category_id):
     try:
-        category = BanCategory.objects.get(id=category_id)
+        category = Category.objects.get(id=category_id)
         if category.name != "uncategorized":
             category.delete()
-    except BanCategory.DoesNotExist:
+    except Category.DoesNotExist:
         pass
 
     return redirect("/auth/corp/ban/list/category/")

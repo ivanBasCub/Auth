@@ -1,6 +1,6 @@
 from celery import shared_task
 from .views import fit_list, update_character_skills
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from skillplans.models import Skillplan, Skillplan_CheckList
 from web.views import check_skill
 
@@ -16,7 +16,7 @@ def fits():
 
 @shared_task
 def character_skill_list():
-    list_character = EveCharater.objects.all()
+    list_character = Eve_Character.objects.all()
     
     for character in list_character:
         character = update_character_skills(character)
@@ -25,7 +25,7 @@ def character_skill_list():
             
 @shared_task
 def refresh_skillplans():
-    list_character = EveCharater.objects.all()
+    list_character = Eve_Character.objects.all()
     skillplan_list = Skillplan.objects.all()
     
     for sp in skillplan_list:

@@ -41,7 +41,7 @@
                             <li><a class="dropdown-item" href="/auth/doctrine/list/">Doctrinas</a></li>
                             <li><a class="dropdown-item" href="/auth/fats/list/">Segimiento de Flotas</a></li>
                             {% if user|has_group:"FC" %}
-                                <li><a class="dropdown-item" href="/auth/fats/add/">Fats</a></li>
+                                <li><a class="dropdown-item" href="/auth/fats/add/">Crear Fat</a></li>
                             {% endif %}
                             {% if user|has_group:"MainFC" %}
                                 <li><a class="dropdown-item" href="/auth/doctrine/admin/">Organizar Doctrinas</a></li>
@@ -110,11 +110,11 @@
                 </ul>
                 <div class="d-flex">
                     <div class="align-self-center text-start">
-                        <h6 class="m-0 text-light">{{main_pj.characterName}}</h5>
+                        <h6 class="m-0 text-light">{{main_pj.character_name}}</h5>
                     </div>
                     <div class="p-2 position-relative m-2">
                         <img class="rounded-circle"
-                            src="https://images.evetech.net/characters/{{main_pj.characterId}}/portrait?size=32"
+                            src="https://images.evetech.net/characters/{{main_pj.character_id}}/portrait?size=32"
                             alt="Senocab">
                     </div>
                     <a class="btn btn-dark align-self-center text-danger" href="/sso/logout/">

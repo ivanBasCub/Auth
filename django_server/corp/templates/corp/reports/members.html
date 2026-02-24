@@ -56,7 +56,7 @@
                 <tbody>
                     {% for member in members %}
                     <tr>
-                        <td class="text-center" style="vertical-align: middle;">{{ member.characterName }}
+                        <td class="text-center" style="vertical-align: middle;">{{ member.character_name }}
                         </td>
                         <td class="text-center" style="vertical-align: middle;">
                             {% if member.groups.count == 0 %}
@@ -66,7 +66,7 @@
                             {% endif %}
                         </td>
                         <td class="text-center" style="vertical-align: middle;">
-                            {% if member.ban %}
+                            {% if member.is_banned %}
                             <button class="btn btn-sm btn-danger">
                                 <i class="bi bi-x-lg"></i>
                             </button>
@@ -89,12 +89,12 @@
                                 <tbody>
                                     {% for alt in member.alts_list %}
                                     <tr>
-                                        <td><a href="https://zkillboard.com/character/{{alt.characterId}}/"
-                                                target="_blank" class="alt">{{ alt.characterName }}</a></td>
-                                        <td><a href="https://zkillboard.com/corporation/{{alt.corpId}}/"
-                                                target="_blank">{{ alt.corpName }}</a></td>
-                                        <td><a href="https://zkillboard.com/alliance/{{alt.allianceId}}/"
-                                                target="_blank">{{ alt.allianceName }}</a></td>
+                                        <td><a href="https://zkillboard.com/character/{{alt.character_id}}/"
+                                                target="_blank" class="alt">{{ alt.character_name }}</a></td>
+                                        <td><a href="https://zkillboard.com/corporation/{{alt.corp_id}}/"
+                                                target="_blank">{{ alt.corp_name }}</a></td>
+                                        <td><a href="https://zkillboard.com/alliance/{{alt.alliance_id}}/"
+                                                target="_blank">{{ alt.alliance_name }}</a></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -103,8 +103,8 @@
                             <em>No tiene alts</em>
                             {% endif %}
                         </td>
-                        <td class="text-center" style="vertical-align: middle;">{{member.totalSkillPoints}}</td>
-                        <td class="text-center" style="vertical-align: middle;">{{member.walletMoney}}</td>
+                        <td class="text-center" style="vertical-align: middle;">{{member.skill_points}}</td>
+                        <td class="text-center" style="vertical-align: middle;">{{member.money}}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

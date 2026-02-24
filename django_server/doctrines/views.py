@@ -1,29 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
-from doctrines.models import Categories, Doctrine, FitShip
-
-def formater(text, items):
-        for item in items:
-            if item.get("flag").startswith("HiSlot") or item.get("flag").startswith("MedSlot") or item.get("flag").startswith("LoSlot") or item.get("flag").startswith("RigSlot") or item.get("flag").startswith("SubSystemSlot"):
-                text.append(f"{item['itemName']}\n")
-            else:
-                text.append(f"{item['itemName']} x{item['quantity']}\n")
-
-        text.append("\n")
-
-        return text
-
-def create_category(name):
-    check = Categories.objects.filter(name=name)
-
-    if check.exists():
-        return -1
-
-    category = Categories.objects.create(name = name)
-    category.save()
-
-    return 0
+from sso.models import Eve_Character
+from .models import Category, Doctrine, Fit
+from .utils import formater, create_category
 
 # DOCTRINES
 
@@ -32,9 +11,9 @@ def create_category(name):
 ### List of doctrines
 @login_required(login_url='/')
 def list_doctrines(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    doctrines = Doctrine.objects.exclude(doctitle = "undoctrine").all()
-    doc_categories = Categories.objects.filter(type = 1).all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    doctrines = Doctrine.objects.exclude(title = "undoctrine").all()
+    doc_categories = Category.objects.filter(type = 1).all()
 
     return render(request, "doctrine/list.html", {
         "main_pj" : main_pj,
@@ -46,8 +25,8 @@ def list_doctrines(request):
 @login_required(login_url="/")
 def doctrine_info(request, doc_id):
     doctrine = Doctrine.objects.get(id = doc_id)
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    doctrine_fits = FitShip.objects.filter(fitDoctrine = doctrine).all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    doctrine_fits = Fit.objects.filter(doctrine = doctrine).all()
 
     return render(request, "doctrine/info.html",{
         "main_pj" : main_pj,
@@ -60,9 +39,9 @@ def doctrine_info(request, doc_id):
 ### List of doctrines
 @login_required(login_url="/")
 def admin_doctrines(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_doctrines = Doctrine.objects.all()
-    list_categories = Categories.objects.all()
+    list_categories = Category.objects.all()
 
     return render(request, "doctrine/admin.html",{
         "main_pj" : main_pj,
@@ -73,9 +52,9 @@ def admin_doctrines(request):
 ### Add new doctrine
 @login_required(login_url="/")
 def add_doctrine(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    doctrine_fits = FitShip.objects.all()
-    doctrines_categories = Categories.objects.filter(type = 1).all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    doctrine_fits = Fit.objects.all()
+    doctrines_categories = Category.objects.filter(type = 1).all()
 
     if request.method == "POST":
         doctrine_fits = request.POST.getlist("fit")
@@ -84,20 +63,20 @@ def add_doctrine(request):
         doctrine_category = int(request.POST.get("categoty",0))
 
         if doctrine_name != "":
-            new_doctrine = Doctrine.objects.create(doctitle = doctrine_name, desc = doctrine_desc)
+            new_doctrine = Doctrine.objects.create(title = doctrine_name, desc = doctrine_desc)
 
             if doctrine_category != 0:
-                category = Categories.objects.get(id = doctrine_category)
+                category = Category.objects.get(id = doctrine_category)
                 new_doctrine.docCategory.add(category)
 
             new_doctrine.save()
 
             for fit in doctrine_fits:
                 try:
-                    fit_obj = FitShip.objects.get(id = int(fit))
-                    fit_obj.fitDoctrine.add(new_doctrine)
+                    fit_obj = Fit.objects.get(id = int(fit))
+                    fit_obj.doctrine.add(new_doctrine)
                     fit_obj.save()
-                except FitShip.DoesNotExist:
+                except Fit.DoesNotExist:
                     pass
 
         return redirect("/auth/doctrine/admin/")
@@ -111,10 +90,10 @@ def add_doctrine(request):
 ### Edit a exists doctrine
 @login_required(login_url="/")
 def edit_doctrine(request, doctrine_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     doctrine = Doctrine.objects.get(id = doctrine_id)
-    doctrines_categories = Categories.objects.filter(type = 1).all()
-    fits = FitShip.objects.all()
+    doctrines_categories = Category.objects.filter(type = 1).all()
+    fits = Fit.objects.all()
 
     if request.method == "POST":
         doctrine_fits = request.POST.getlist("fit")
@@ -123,21 +102,21 @@ def edit_doctrine(request, doctrine_id):
         doctrine_category = int(request.POST.get("categoty",0))
 
         if doctrine_name != "":
-            doctrine.doctitle = doctrine_name
+            doctrine.title = doctrine_name
             doctrine.desc = doctrine_desc
-            doctrine.docCategory.clear()
+            doctrine.category.clear()
 
             if doctrine_category != 0:
-                category = Categories.objects.get(id = doctrine_category)
-                doctrine.docCategory.add(category)
+                category = Category.objects.get(id = doctrine_category)
+                doctrine.category.add(category)
             
             doctrine.save()
 
             for fit in fits:
                 if str(fit.id) in doctrine_fits:
-                    fit.fitDoctrine.add(doctrine)
+                    fit.doctrine.add(doctrine)
                 else:
-                    fit.fitDoctrine.remove(doctrine)
+                    fit.doctrine.remove(doctrine)
                 
                 fit.save()
         
@@ -164,14 +143,14 @@ def del_doctrine(request, doctrine_id):
 ### Add new doctrine category
 @login_required(login_url="/")
 def add_doctrine_category(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
 
     if request.method == "POST":
         category_name = request.POST.get("categoryName","").strip()
         category_type = int(request.POST.get("categoryType",0))
 
         if category_name != "":
-            new_category = Categories(name=category_name, type=category_type)
+            new_category = Category(name=category_name, type=category_type)
             new_category.save()
 
         return redirect("/auth/doctrine/admin/")
@@ -183,8 +162,8 @@ def add_doctrine_category(request):
         
 ### Mod a doctrine category
 def edit_doctrine_category(request, category_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    category = Categories.objects.get(id = category_id)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    category = Category.objects.get(id = category_id)
 
     if request.method == "POST":
         category_name = request.POST.get("categoryName","").strip()
@@ -205,10 +184,10 @@ def edit_doctrine_category(request, category_id):
 ### Del a doctrine category
 def del_doctrine_category(request, category_id):
     try:
-        category = Categories.objects.get(id=category_id)
+        category = Category.objects.get(id=category_id)
         if category.name != "uncategorized":
             category.delete()
-    except Categories.DoesNotExist:
+    except Category.DoesNotExist:
         pass
 
     return redirect("/auth/doctrine/admin/")
@@ -229,8 +208,8 @@ def fit(request, fit_id):
                 return False
         return True
 
-    fit_data = FitShip.objects.get(id = fit_id)
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    fit_data = Fit.objects.get(id = fit_id)
+    list_pj = Eve_Character.objects.filter(user = request.user).all()
     main_pj = list_pj.filter(main=True).first()
 
     for pj in list_pj:
@@ -286,9 +265,9 @@ def fit(request, fit_id):
 ### edit a fit
 @login_required(login_url="/")
 def edit_fit(request, fit_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    fit_data = FitShip.objects.get(id = fit_id)
-    category_list = Categories.objects.filter(type=2).all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    fit_data = Fit.objects.get(id = fit_id)
+    category_list = Category.objects.filter(type=2).all()
 
     if request.method == "POST":
         fit_name = request.POST.get("nameFit","").strip()
@@ -296,13 +275,13 @@ def edit_fit(request, fit_id):
         fit_category = int(request.POST.get("fitCategory",0))
 
         if fit_name != "":
-            fit_data.nameFit = fit_name
+            fit_data.name_fit = fit_name
             fit_data.desc = fit_desc
-            fit_data.fitCategory.clear()
+            fit_data.category.clear()
 
             if fit_category != 0:
-                category = Categories.objects.get(id = fit_category)
-                fit_data.fitCategory.add(category)
+                category = Category.objects.get(id = fit_category)
+                fit_data.category.add(category)
             
             fit_data.save()
 

@@ -2,11 +2,11 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
 def create_initial_ban_categories(sender, **kwargs):
-    from .models import BanCategory
-    categories = ["RMT", "Multa", "Comportamiento inapropiado", "Spam", "60 días NO Fats", "Black list No actividad"]
+    from .models import Category
+    categories = ["RMT", "Multa", "Comportamiento inapropiado", "Spam", "60 días NO Fleet", "Black list No actividad"]
 
     for category in categories:
-        BanCategory.objects.get_or_create(name=category)
+        Category.objects.get_or_create(name=category)
 
 class BanConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'

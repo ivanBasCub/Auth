@@ -3,13 +3,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .utils import create_fats
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from doctrines.models import Doctrine
-from .models import Fats, FleetType, Fats_Character, SRP, SRPShips
+from .models import Fleet, FleetType, Fat_Character, SRP, SRP_Ship
 from .utils import create_srp_request
 from utils.views import format_number
 
-# Views Fats Feature
+# Views Fleet Feature
 
 ## USER VIEWS
 
@@ -18,21 +18,21 @@ from utils.views import format_number
 def fat_list(request):
     limit_30_days = timezone.now() - timedelta(days=30)
 
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    list_pj = Eve_Character.objects.filter(user = request.user).all()
     main_pj = list_pj.filter(main=True).first()
-    fats = Fats.objects.filter(date__gte = limit_30_days).order_by('date').all()
-    fat_list = Fats_Character.objects.filter(fat__in = fats, character__in = list_pj).all()
+    fats = Fleet.objects.filter(date__gte = limit_30_days).order_by('date').all()
+    fat_list = Fat_Character.objects.filter(fleet__in = fats, character__in = list_pj).all()
 
-    return render(request, "fat/fatlist.html",{
+    return render(request, "fat/list.html",{
         "main_pj" : main_pj,
         "list_pj" : list_pj,
         "fats" : fat_list
     })
 
-### Create new fat
+### Create new fleet
 @login_required(login_url="/")
 def add_fat(request):
-    list_pj = EveCharater.objects.filter(user_character = request.user).all()
+    list_pj = Eve_Character.objects.filter(user = request.user).all()
     main_pj = list_pj.filter(main=True).first()
     doctrines = Doctrine.objects.all()
     fleet_types = FleetType.objects.all()
@@ -51,7 +51,7 @@ def add_fat(request):
 
         return redirect("/auth/fats/list/")
     else:
-        return render(request, "fat/addFat.html",{
+        return render(request, "fat/add.html",{
             "main_pj" : main_pj,
             "list_pj" : list_pj,
             "fleet_types" : fleet_types,
@@ -65,13 +65,13 @@ def add_fat(request):
 ### Index SRP
 @login_required(login_url="/")
 def srp_index(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_srp = SRP.objects.all()
     total_cost = 0
     for srp in list_srp:
         total_cost += srp.srp_cost
         srp.srp_cost = format_number(srp.srp_cost)
-        srp.pending_requests = SRPShips.objects.filter(srp = srp, status = 0).count()
+        srp.pending_requests = SRP_Ship.objects.filter(srp = srp, status = 0).count()
 
     total_cost = format_number(total_cost)
 
@@ -84,7 +84,7 @@ def srp_index(request):
 ### Request SRP
 @login_required(login_url="/")
 def srp_request(request, srp_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     srp = SRP.objects.get(srp_id = srp_id)
     
     if request.method == "POST":
@@ -103,9 +103,9 @@ def srp_request(request, srp_id):
 ### View SRP
 @login_required(login_url="/")
 def srp_view(request, srp_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     srp = SRP.objects.get(srp_id = srp_id)
-    list_srp_ships = SRPShips.objects.filter(srp = srp).all()
+    list_srp_ships = SRP_Ship.objects.filter(srp = srp).all()
     lost_count = list_srp_ships.count()
     
     srp.srp_cost = format_number(srp.srp_cost)
@@ -119,7 +119,7 @@ def srp_view(request, srp_id):
 ### Admin SRP
 @login_required(login_url="/")
 def srp_admin(request, srp_id):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
 
     if request.method == "POST":
         status = 0
@@ -133,7 +133,7 @@ def srp_admin(request, srp_id):
             srp_status = int(request.POST.get("srp_status",0).strip())
         
         if srp_request_id != 0:
-            srp_request = SRPShips.objects.get(id = srp_request_id)
+            srp_request = SRP_Ship.objects.get(id = srp_request_id)
             srp_request.status = status
             srp_request.save()
 
@@ -145,8 +145,8 @@ def srp_admin(request, srp_id):
             return redirect("/auth/fats/srp/")
 
     srp = SRP.objects.get(srp_id = srp_id)
-    list_srp_ships = SRPShips.objects.filter(srp = srp, status = 0).all()
-    check_srp_list = SRPShips.objects.filter(srp = srp).exclude(status = 0).all()
+    list_srp_ships = SRP_Ship.objects.filter(srp = srp, status = 0).all()
+    check_srp_list = SRP_Ship.objects.filter(srp = srp).exclude(status = 0).all()
 
     return render(request,"srp/admin.html",{
         "main_pj" : main_pj,

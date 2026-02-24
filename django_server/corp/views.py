@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
-from ban.models import BannedCharacter
+from sso.models import Eve_Character
+from ban.models import Character
 from recruitment.models import Applications_access
 from skillplans.models import Skillplan, Skillplan_CheckList
 from django.contrib.auth.models import User, Group
-from fats.models import Fats_Character
+from fats.models import Fat_Character
 from utils.views import format_number, create_csv
 from django.utils import timezone
 from datetime import timedelta
@@ -15,13 +15,13 @@ from datetime import timedelta
 # Admin user control
 @login_required(login_url="/")
 def user_control_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     
     if request.method == "POST":
         user_id = int(request.POST.get("id",0).strip())
 
         user = User.objects.get(id = user_id)
-        list_pjs = EveCharater.objects.filter(user_character = user).all()
+        list_pjs = Eve_Character.objects.filter(user = user).all()
 
         if user:
             for pj in list_pjs:
@@ -48,16 +48,16 @@ def user_control_list(request):
 # Member Report
 @login_required(login_url="/")
 def report_members_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
-    members = EveCharater.objects.filter(main= True).all()
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
+    members = Eve_Character.objects.filter(main= True).all()
     
     for member in members:
-        user = User.objects.prefetch_related('groups').get(username = member.characterName.replace(' ','_'))
+        user = User.objects.prefetch_related('groups').get(username = member.character_name.replace(' ', '_'))
         member.groups = user.groups.all()
-        member.alts_list = EveCharater.objects.filter(user_character = user, main = False).all()
+        member.alts_list = Eve_Character.objects.filter(user = user, main = False).all()
         for alt in member.alts_list:
-            member.walletMoney += alt.walletMoney
-        member.ban = BannedCharacter.objects.filter(character_id = member.characterId).exists()
+            member.money += alt.money
+        member.is_banned = Character.objects.filter(character =member).exists()
 
     if request.method == "POST":
         if "csv" in request.POST:
@@ -65,12 +65,12 @@ def report_members_list(request):
             list_data = [["Main","Groups","Lista Negra","Alts", "Skill Points", "Total ISK"]]
             for member in members:
                 list_data.append([
-                        member.characterName,
+                        member.character_name,
                         member.groups, 
                         member.ban,
-                        "/ ".join(map(lambda alt: alt.characterName, member.alts_list)),
-                        member.totalSkillPoints,
-                        member.walletMoney     
+                        "/ ".join(map(lambda alt: alt.character_name, member.alts_list)),
+                        member.skill_points,
+                        member.money
                 ])
                         
             create_csv(list_data, file_name)
@@ -78,21 +78,21 @@ def report_members_list(request):
             return redirect(f"/static/csv/{file_name}")
 
     for member in members: 
-        member.walletMoney = format_number(member.walletMoney)
-        member.totalSkillPoints = format_number(member.totalSkillPoints)
+        member.money = format_number(member.money)
+        member.skill_points = format_number(member.skill_points)
 
     return render(request, "corp/reports/members.html",{
         "main_pj" : main_pj,
         "members" : members
     })
     
-# Fats Report
+# Fleet Report
 @login_required(login_url="/")
 def fats_reports(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     user_list = User.objects.exclude(username__in=["Adjutora Helgast","admin","root"]).all()
     three_months = timezone.now() - timedelta(days=90)
-    fats = Fats_Character.objects.filter(fat__date__gte = three_months).all()
+    fats = Fat_Character.objects.filter(fat__date__gte = three_months).all()
 
     for user in user_list:
         user_fats = fats.filter(character__user_character = user).all()
@@ -105,7 +105,7 @@ def fats_reports(request):
     if request.method == "POST":
         if "csv" in request.POST:
             file_name = "fats_reports" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
-            list_data = [["Main","Total Fats","CTA", "Strat-Op", "Home Defense", "Roam"]]
+            list_data = [["Main","Total Fleet","CTA", "Strat-Op", "Home Defense", "Roam"]]
             for user in user_list:
                 list_data.append([
                     user.username,
@@ -128,10 +128,10 @@ def fats_reports(request):
 # Skillplan Report
 @login_required(login_url="/")
 def skillplan_reports(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     skillplans = Skillplan.objects.filter(name__in = ["Guardia Imperial","Vanguardia","Legionario","Primaris","Campeon del capitulo","Ultramarine","DeathWacth","Magic 14"]).all()
     corp_members = User.objects.filter(groups__name = "Miembro")
-    main_list = EveCharater.objects.filter(main = True, user_character__in=corp_members).all()
+    main_list = Eve_Character.objects.filter(main = True, user__in=corp_members).all()
     
     for main in main_list:
         main.skillplanCheck = Skillplan_CheckList.objects.filter(character = main,skillPlan__in = skillplans).all().order_by("skillPlan")
@@ -141,7 +141,7 @@ def skillplan_reports(request):
             file_name = "skillplan" + str(timezone.now().strftime("%Y%m%d%H%M%S")) + ".csv"
             list_data = [["Main","Guardia Imperial","Vanguardia","Legionario","Primaris","Campeon del capitulo","Ultramarine","DeathWacth","Magic 14"]]
             for main in main_list:
-                data = [main.characterName]
+                data = [main.character_name]
                 for sp in main.skillplanCheck:
                     data.append(sp.status)
                 list_data.append(data)
@@ -159,7 +159,7 @@ def skillplan_reports(request):
 # Groups Report
 @login_required(login_url="/")
 def groups_report(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     groups = Group.objects.all().prefetch_related('user_set')
     
     if request.method == "POST":

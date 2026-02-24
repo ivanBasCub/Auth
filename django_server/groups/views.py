@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import GroupNotifications
 from django.contrib.auth.models import User, Group
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from django.contrib.auth.decorators import login_required
 
 
@@ -20,7 +20,7 @@ def create_notification(group_id,user_id,status):
 
 @login_required(login_url="/")
 def group_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     groups = Group.objects.exclude(name__in= ["Miembro","Reserva Imperial"]).all()
     notification_list = GroupNotifications.objects.filter(user = request.user).all()
 
@@ -50,7 +50,7 @@ def group_list(request):
 
 @login_required(login_url="/")
 def group_nofitication_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_notifications = GroupNotifications.objects.all()
 
     if request.method == "POST":

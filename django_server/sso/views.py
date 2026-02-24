@@ -5,7 +5,7 @@ import string
 import urllib.parse
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
-from .models import EveCharater
+from .models import Eve_Character
 from base64 import b64encode
 import requests
 from datetime import timedelta
@@ -15,10 +15,11 @@ import ban.models as ban_models
 from recruitment.models import Applications_access
 import secrets
 
+
 # Funcion para llamar hacer el login con la web de Eve
 def eve_login(request):
     state = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-    
+
     params = {
         'response_type': 'code',
         'client_id': settings.CLIENT_ID,
@@ -30,12 +31,13 @@ def eve_login(request):
     url = 'https://login.eveonline.com/v2/oauth/authorize?' + urllib.parse.urlencode(params)
     return redirect(url)
 
+
 # Funcion de autenticación del login con eve y creacion de los tokens y obtener la información principal del personaje
 def eve_callback(request):
     code = request.GET.get('code')
 
     headers = {
-        'Authorization' : f'Basic {b64encode(f"{settings.CLIENT_ID}:{settings.CLIENT_SECRET}".encode()).decode()}',
+        'Authorization': f'Basic {b64encode(f"{settings.CLIENT_ID}:{settings.CLIENT_SECRET}".encode()).decode()}',
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
@@ -57,11 +59,11 @@ def eve_callback(request):
     user_info = res.json()
     return check_account(request, tokens, user_info)
 
+
 # Funciones para comprobar las cuentas
 def check_account(request, tokens, user_info):
-    
     # Comprobar si el personaje esta baneado
-    if ban_models.BannedCharacter.objects.filter(character_id=user_info["CharacterID"]).exists():
+    if ban_models.Character.objects.filter(character__character_id=user_info["CharacterID"]).exists():
         return ban_notice(request)
 
     if request.user.is_authenticated:
@@ -69,9 +71,10 @@ def check_account(request, tokens, user_info):
     else:
         return update_create_user(request, tokens, user_info)
 
+
 # Caso de que haya una cuenta logeada
 def register_eve_character(request, tokens, user_info):
-    check = EveCharater.objects.filter(characterName = user_info["CharacterName"])
+    check = Eve_Character.objects.filter(character_name=user_info["CharacterName"])
     expiration = timezone.now() + timedelta(minutes=20)
 
     if check.exists():
@@ -83,6 +86,7 @@ def register_eve_character(request, tokens, user_info):
 
         return redirect("../../auth/dashboard/")
 
+
 # Caso de que no haya una cuenta logeada
 def update_create_user(request, tokens, user_info):
     expiration = timezone.now() + timedelta(minutes=20)
@@ -91,21 +95,21 @@ def update_create_user(request, tokens, user_info):
 
     try:
         # Caso de que el usuario y el pj existan en la BBDD
-        user = User.objects.get(username = user_info["CharacterName"].replace(" ","_"))
+        user = User.objects.get(username=user_info["CharacterName"].replace(" ", "_"))
         user.set_password(random_password)
         user.save()
         refresh_eve_character(user, user_info, tokens, expiration)
 
-        login(request,user)
+        login(request, user)
 
     except User.DoesNotExist:
-        check = EveCharater.objects.filter(characterName = user_info["CharacterName"])
+        check = Eve_Character.objects.filter(character_name=user_info["CharacterName"])
 
-        member_group = Group.objects.get_or_create(name = "Miembro")
-        user = User.objects.create(username = user_info["CharacterName"].replace(" ","_"))
+        member_group = Group.objects.get_or_create(name="Miembro")
+        user = User.objects.create(username=user_info["CharacterName"].replace(" ", "_"))
         user.set_password(random_password)
         user.save()
-        
+
         if check.exists():
             refresh_eve_character(user, user_info, tokens, expiration)
             return redirect("../../auth/dashboard/")
@@ -116,66 +120,64 @@ def update_create_user(request, tokens, user_info):
 
     return redirect("../../auth/dashboard/")
 
+
 # Funcion para guardar el personaje
 def save_eve_character(user, user_info, tokens, expiration):
+    character = Eve_Character.objects.create(
+        character_id=user_info["CharacterID"],
+        character_name=user_info["CharacterName"],
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        expiration=expiration,
+        main=False,
+        user=user
+    )
 
-    character = EveCharater.objects.create(
-            characterId = user_info["CharacterID"],
-            characterName = user_info["CharacterName"],
-            accessToken = tokens["access_token"],
-            refreshToken = tokens["refresh_token"],
-            expiration = expiration,
-            main = False,
-            user_character = user
-        )
-    
     character = esi_views.character_corp_alliance_info(character)
-    
-    if character.corpId == int(settings.CORP_ID):
-        member_group = Group.objects.get(name = "Miembro")
+
+    if character.corp_id == int(settings.CORP_ID):
+        member_group = Group.objects.get(name="Miembro")
         user.groups.add(member_group)
         user.save()
-    
 
     character = esi_views.character_wallet_money(character)
     character = esi_views.character_skill_points(character)
 
-    if user.username == user_info["CharacterName"].replace(" ","_"):
+    if user.username == user_info["CharacterName"].replace(" ", "_"):
         character.main = True
-        if character.corpId != int(settings.CORP_ID):
+        if character.corp_id != int(settings.CORP_ID):
             state = False
             if "Cynosural Field Theory" in character.skills:
                 if character.skills["Cynosural Field Theory"] == 5:
                     state = True
 
             Applications_access.objects.create(
-                user = user,
-                application_type = 1,
-                totalSP = character.totalSkillPoints,
-                cynoCovert = state
+                user=user,
+                application_type=1,
+                totalSP=character.skill_points,
+                cynoCovert=state
             ).save()
-
-    
 
     character.save()
 
+
 # Funcion para actualizar la información del personaje
 def refresh_eve_character(user, user_info, tokens, expiration):
-    character = EveCharater.objects.get(characterName = user_info["CharacterName"])
-    character.user_character = user
-    character.accessToken = tokens["access_token"]
-    character.refreshToken = tokens["refresh_token"]
+    character = Eve_Character.objects.get(character_name=user_info["CharacterName"])
+    character.user = user
+    character.access_token = tokens["access_token"]
+    character.refresh_token = tokens["refresh_token"]
     character.expiration = expiration
     character = esi_views.character_corp_alliance_info(character)
     character = esi_views.character_wallet_money(character)
     character = esi_views.character_skill_points(character)
     if character.deleted == True:
         character.deleted = False
-        
-    if user.username == user_info["CharacterName"].replace(" ","_"):
+
+    if user.username == user_info["CharacterName"].replace(" ", "_"):
         character.main = True
-        if character.corpId == int(settings.CORP_ID):
-            member_group = Group.objects.get(name = "Miembro")
+        if character.corp_id == int(settings.CORP_ID):
+            member_group = Group.objects.get(name="Miembro")
             user.groups.add(member_group)
             user.save()
 
@@ -188,29 +190,28 @@ def ban_notice(request):
 
 # Funcion para refrescar el token de los pj de Eve
 def refresh_token(character):
-    
     headers = {
-        'Authorization' : f'Basic {b64encode(f"{settings.CLIENT_ID}:{settings.CLIENT_SECRET}".encode()).decode()}',
+        'Authorization': f'Basic {b64encode(f"{settings.CLIENT_ID}:{settings.CLIENT_SECRET}".encode()).decode()}',
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
     data = {
-        'grant_type' : 'refresh_token',
-        'refresh_token' : character.refreshToken
+        'grant_type': 'refresh_token',
+        'refresh_token': character.refresh_token
     }
 
     response = requests.post(
-        url= settings.EVE_REFRESH_TOKEN_URL,
+        url=settings.EVE_REFRESH_TOKEN_URL,
         headers=headers,
-        data= data
+        data=data
     )
 
     if response.status_code == 200:
         tokens = response.json()
         expiration = timezone.now() + timedelta(minutes=20)
 
-        character.accessToken = tokens['access_token']
-        character.refreshToken = tokens["refresh_token"]
+        character.access_token = tokens['access_token']
+        character.refresh_token = tokens["refresh_token"]
         character.expiration = expiration
         character = esi_views.character_corp_alliance_info(character)
         character = esi_views.character_wallet_money(character)
@@ -218,22 +219,24 @@ def refresh_token(character):
         user = character.user_character
 
         ice_group = Group.objects.get(name="Reserva Imperial")
-        member_group = Group.objects.get(name = "Miembro")
-        
-        if character.corpId == int(settings.CORP_ID):
+        member_group = Group.objects.get(name="Miembro")
+
+        if character.corp_id == int(settings.CORP_ID):
             if character.main == True:
                 user.groups.add(member_group)
                 user.groups.remove(ice_group)
                 Applications_access.objects.filter(user=user).delete()
         else:
-            if character.main == True and not ban_models.BannedCharacter.objects.filter(character_id=character.characterId).exists() and Applications_access.objects.filter(user=user).exists() == False:
+            if character.main == True and not ban_models.BannedCharacter.objects.filter(
+                    character_id=character.character_id).exists() and Applications_access.objects.filter(
+                    user=user).exists() == False:
                 user.groups.clear()
                 user.groups.add(ice_group)
         user.save()
         character.save()
-        
+
     else:
-        print(f"Error al refrescar token de {character.characterName}: {response.text}")
+        print(f"Error al refrescar token de {character.character_name}: {response.text}")
 
 
 def eve_logout(request):

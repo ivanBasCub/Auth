@@ -19,10 +19,10 @@
                     {% for char in characters %}
                     <div class="card text-white bg-secondary m-2 mw-50">
                         <div class="card-header text-center">
-                            {{char.characterName}}
+                            {{char.character_name}}
                         </div>
                         <div class="card-body text-center">
-                            <img class="rounded" src="https://images.evetech.net/characters/{{char.characterId}}/portrait?size=256">
+                            <img class="rounded" src="https://images.evetech.net/characters/{{char.character_id}}/portrait?size=256">
                         </div>
                         <div class="card-footer">
                             <form method="post">

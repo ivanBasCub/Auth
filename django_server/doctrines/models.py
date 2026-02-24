@@ -1,6 +1,6 @@
 from django.db import models
 
-class Categories(models.Model):
+class Category(models.Model):
     name = models.CharField(max_length=200)
     type = models.IntegerField(default=0)
 
@@ -8,26 +8,26 @@ class Categories(models.Model):
         return self.name
 
 class Doctrine(models.Model):
-    doctitle = models.CharField(max_length=200)
+    title = models.CharField(max_length=200)
     desc = models.TextField(default="")
-    docCategory = models.ManyToManyField(
-        'Categories',
+    category = models.ManyToManyField(
+        'Category',
         related_name="DoctrineCategory"
     )
 
     def __str__(self):
-        return self.doctitle
+        return self.title
 
-class FitShip(models.Model):
-    fitId = models.BigIntegerField(default=0)
-    shipId = models.BigIntegerField(default=0)
-    shipName = models.CharField(max_length=100, default="")
-    nameFit = models.CharField(max_length=200)
+class Fit(models.Model):
+    fit_id = models.BigIntegerField(default=0)
+    ship_id = models.BigIntegerField(default=0)
+    ship_name = models.CharField(max_length=100, default="")
+    name_fit = models.CharField(max_length=200)
     desc = models.TextField(default="")
     items = models.JSONField(default=dict)
     min_skills = models.JSONField(default=dict)
-    fitCategory = models.ManyToManyField('Categories', related_name="fitCategory")
-    fitDoctrine = models.ManyToManyField('Doctrine', related_name="fitDoctrine")
+    category = models.ManyToManyField('Category', related_name="fitCategory")
+    doctrine = models.ManyToManyField('Doctrine', related_name="fitDoctrine")
 
     def __str__(self):
         return self.nameFit

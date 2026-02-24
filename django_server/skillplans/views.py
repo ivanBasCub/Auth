@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from sso.models import EveCharater
+from sso.models import Eve_Character
 from .models import Skillplan, Skillplan_CheckList
 from .utils import tranfer_skills
 
@@ -9,7 +9,7 @@ from .utils import tranfer_skills
 # List of skillplans
 @login_required(login_url="/")
 def skill_plan_list(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     list_skillplans = Skillplan.objects.all()
 
     return render(request, "audit/skills/admin.html",{
@@ -20,7 +20,7 @@ def skill_plan_list(request):
 # Add a skillplan
 @login_required(login_url="/")
 def add_skill_plan(request):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
 
     if request.method == "POST":
         name = request.POST.get("name","").strip()
@@ -45,7 +45,7 @@ def add_skill_plan(request):
 # Modify a skillplan
 @login_required(login_url="/")
 def edit_skill_plan(request, skillplanid):
-    main_pj = EveCharater.objects.get(main=True, user_character = request.user)
+    main_pj = Eve_Character.objects.get(main=True, user = request.user)
     sp = Skillplan.objects.get(id = skillplanid)
 
     if request.method == "POST":
@@ -71,7 +71,10 @@ def edit_skill_plan(request, skillplanid):
 # Delete a skillplan
 @login_required(login_url="/")
 def del_skill_plan(request, skillplanid):
-    sp = Skillplan.objects.get(id = skillplanid)
-    checklist = Skillplan_CheckList.objects.filter(skillPlan = sp).delete()
-    sp.delete()
+    try:
+        sp = Skillplan.objects.get(id = skillplanid)
+        Skillplan_CheckList.objects.filter(skillPlan = sp).delete()
+        sp.delete()
+    except Skillplan.DoesNotExist:
+        pass
     return redirect("/auth/admin/skillplans/")
